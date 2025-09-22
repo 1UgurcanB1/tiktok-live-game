@@ -2,23 +2,24 @@
 import express from "express";
 import cors from "cors";
 import { WebSocketServer } from "ws";
-import { Pool } from "pg";
-import { PORT, WS_PATH, DATABASE_URL, NODE_ENV, TIKTOK_USERNAME } from "./env.js";
+import { connectMongo, healthMongo } from "./db.js";
+import { PORT, WS_PATH, NODE_ENV, TIKTOK_USERNAME } from "./env.js";
 import type { ClientToServerMessage, ServerToClientMessage, TikTokStatusEvent, ChatEventData, ChatEvent, GiftEventData, GiftEvent } from "@tiktok/types";
 import { TikTokLiveService } from "./tiktok.js";
+import { ChatModel, GiftModel } from "./models.js";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const server = http.createServer(app);
-const pool = new Pool({ connectionString: DATABASE_URL });
+await connectMongo();
 const tiktok = new TikTokLiveService();
 
 app.get("/api/health", async (_req, res) => {
   try {
-    const r = await pool.query("select 1 as ok");
-    res.json({ ok: true, env: NODE_ENV, db: r.rows[0].ok === 1 });
+    const h = await healthMongo();
+    res.status(h.ok ? 200 : 500).json({ env: NODE_ENV, db: h.ok, error: h.error });
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e) });
   }
@@ -56,21 +57,23 @@ app.post("/api/tiktok/connect", async (req, res) => {
     const state = await tiktok.connect(username);
 
     // wire listeners
-    tiktok.on("chat", (data: ChatEventData) => {
+    tiktok.on("chat", async (data: ChatEventData) => {
       const ev: ChatEvent = {
         type: "chat",
         timestamp: new Date().toISOString(),
         data
       };
+      await ChatModel.create({ raw: ev.data });
       broadcast(ev);
     });
 
-    tiktok.on("gift", (data: GiftEventData) => {
+    tiktok.on("gift", async (data: GiftEventData) => {
       const ev: GiftEvent = {
         type: "gift",
         timestamp: new Date().toISOString(),
         data
       };
+      await GiftModel.create({ raw: ev.data });
       broadcast(ev);
     });
 

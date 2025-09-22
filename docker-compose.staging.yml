@@ -1,25 +1,25 @@
 services:
-  db:
-    image: postgres:17
-    container_name: tiktok_pg_staging
+  mongo:
+    image: mongo:7
+    container_name: tiktok_mongo_staging
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: tiktok_live_staging
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
     ports:
-      - "5433:5432"
+      - "27018:27018"
     volumes:
-      - ./.docker/staging/db:/var/lib/postgresql/data
+      - ./.docker/staging/mongo:/data/db
+    restart: unless-stopped
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: tiktok_pgadmin_staging
+  mongo-express:
+    image: mongo-express:1
+    container_name: tiktok_mongoexpress_staging
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@gamil.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: root
+      ME_CONFIG_MONGODB_URL: mongodb://root:root@mongo:27018/
     ports:
-      - "5051:80"
+      - "8082:8082"
     depends_on:
-      - db
-    volumes:
-      - ./.docker/staging/pgadmin:/var/lib/pgadmin
+      - mongo
+    restart: unless-stopped
