@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:17
+    container_name: tiktok_pg_prod
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tiktok_live
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./.docker/prod/db:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: tiktok_pgadmin_prod
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gamil.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5052:80"
+    depends_on:
+      - db
+    volumes:
+      - ./.docker/prod/pgadmin:/var/lib/pgadmin

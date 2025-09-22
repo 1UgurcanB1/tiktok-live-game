@@ -41,6 +41,7 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
+.pnpm-store
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
@@ -78,6 +79,8 @@ web_modules/
 .env.test.local
 .env.production.local
 .env.local
+**/.env*
+!.env.example
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -90,6 +93,7 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+.vite
 
 # Gatsby files
 .cache/
@@ -134,3 +138,14 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# OS/IDE
+.DS_Store
+.vscode/
+.idea/
+
+# docker
+.docker/
+
+# turbo cache
+.turbo/
