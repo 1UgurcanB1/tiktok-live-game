@@ -14,6 +14,7 @@
         "dotenv": "17.2.2",
         "express": "5.1.0",
         "pg": "8.16.3",
+        "tiktok-live-connector": "2.0.7-beta1",
         "ws": "8.18.3"
     },
     "devDependencies": {
