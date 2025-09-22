@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import { WebSocketServer } from "ws";
 import { Pool } from "pg";
-import { PORT, WS_PATH, DATABASE_URL, NODE_ENV } from "./env";
+import { PORT, WS_PATH, DATABASE_URL, NODE_ENV } from "./env.js";
 import type { ClientToServerMessage, ServerToClientMessage } from "@tiktok/types";
 
 const app = express();
