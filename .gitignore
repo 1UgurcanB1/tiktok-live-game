@@ -149,3 +149,6 @@ dist
 
 # turbo cache
 .turbo/
+
+# husky
+.husky

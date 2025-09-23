@@ -3,10 +3,17 @@ import express from "express";
 import cors from "cors";
 import { WebSocketServer } from "ws";
 import { connectMongo, healthMongo } from "./db.js";
-import { PORT, WS_PATH, NODE_ENV, TIKTOK_USERNAME } from "./env.js";
-import type { ClientToServerMessage, ServerToClientMessage, TikTokStatusEvent, ChatEventData, ChatEvent, GiftEventData, GiftEvent } from "@tiktok/types";
+import { env } from "./env.js";
+import type {
+  DBStatusEvent,
+  TikTokStatusEvent,
+  ChatEventData,
+  ChatEvent,
+  GiftEventData,
+  GiftEvent,
+} from "@tiktok/types";
 import { TikTokLiveService } from "./tiktok.js";
-import { ChatModel, GiftModel } from "./models.js";
+import { toISO } from "@tiktok/utils";
 
 const app = express();
 app.use(cors());
@@ -19,61 +26,63 @@ const tiktok = new TikTokLiveService();
 app.get("/api/health", async (_req, res) => {
   try {
     const h = await healthMongo();
-    res.status(h.ok ? 200 : 500).json({ env: NODE_ENV, db: h.ok, error: h.error });
+    const ev: DBStatusEvent = {
+      type: "db.status",
+      env: env.NODE_ENV,
+      connected: h.ok,
+      error: h.error,
+      timestamp: toISO(new Date()),
+    };
+    broadcast(ev);
+    res.status(h.ok ? 200 : 500).json(ev);
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e) });
   }
 });
 
-const wss = new WebSocketServer({ server, path: WS_PATH });
+const wss = new WebSocketServer({ server, path: env.WS_PATH });
 const clients = new Set<import("ws").WebSocket>();
 
 wss.on("connection", (socket) => {
-  const welcome: ServerToClientMessage = { type: "welcome", timestamp: new Date().toISOString() };
   clients.add(socket);
   socket.on("close", () => clients.delete(socket));
-  socket.send(JSON.stringify(welcome));
-  socket.on("message", (buf) => {
-    try {
-      const msg = JSON.parse(String(buf)) as ClientToServerMessage;
-      if (msg.type === "ping") {
-        socket.send(JSON.stringify({ type: "pong", timestamp: new Date().toISOString() }));
-      } else if (msg.type === "echo") {
-        socket.send(JSON.stringify({ type: "broadcast", payload: msg.payload, timestamp: new Date().toISOString() }));
-      }
-    } catch { }
-  });
 });
 
-function broadcast(msg: any) {
-  const data = JSON.stringify(msg);
-  for (const c of clients) try { c.send(data); } catch { }
+function broadcast(obj: unknown) {
+  const data = JSON.stringify(obj);
+  for (const client of wss.clients) {
+    if (client.readyState === 1 && client.bufferedAmount < 1_000_000) {
+      client.send(data);
+    }
+  }
 }
 
 app.post("/api/tiktok/connect", async (req, res) => {
-  const username = TIKTOK_USERNAME
-  if (!username) return res.status(400).json({ ok: false, error: "username required" });
+  let { username } = req.body as { username?: string };
+  if (!username) {
+    username = env.TIKTOK_USERNAME;
+  }
+  if (!username)
+    return res.status(400).json({ ok: false, error: "username required" });
   try {
     const state = await tiktok.connect(username);
 
     // wire listeners
     tiktok.on("chat", async (data: ChatEventData) => {
       const ev: ChatEvent = {
-        type: "chat",
-        timestamp: new Date().toISOString(),
-        data
+        type: "tiktok.chat",
+        timestamp: toISO(new Date()),
+        data,
       };
-      await ChatModel.create({ raw: ev.data });
       broadcast(ev);
     });
 
     tiktok.on("gift", async (data: GiftEventData) => {
       const ev: GiftEvent = {
-        type: "gift",
-        timestamp: new Date().toISOString(),
-        data
+        type: "tiktok.gift",
+        timestamp: toISO(new Date()),
+        data,
       };
-      await GiftModel.create({ raw: ev.data });
       broadcast(ev);
     });
 
@@ -82,11 +91,11 @@ app.post("/api/tiktok/connect", async (req, res) => {
       connected: true,
       roomId: String(state.roomId),
       username,
-      timestamp: new Date().toISOString(),
+      timestamp: toISO(new Date()),
     };
     broadcast(status);
 
-    res.json({ ok: true, roomId: state.roomId, username });
+    res.json(status);
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e) });
   }
@@ -97,7 +106,7 @@ app.post("/api/tiktok/disconnect", async (_req, res) => {
   const status: TikTokStatusEvent = {
     type: "tiktok.status",
     connected: false,
-    timestamp: new Date().toISOString(),
+    timestamp: toISO(new Date()),
   };
   broadcast(status);
   res.json({ ok: true });
@@ -112,27 +121,6 @@ app.get("/api/tiktok/status", (_req, res) => {
   });
 });
 
-wss.on("connection", (socket) => {
-  socket.on("message", async (buf) => {
-    try {
-      const msg = JSON.parse(String(buf));
-      if (msg.type === "tiktok.connect" && msg.username) {
-        const r = await fetch(`http://localhost:${PORT}/api/tiktok/connect`, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ username: msg.username }),
-        });
-        const j = await r.json();
-        socket.send(JSON.stringify({ type: "broadcast", payload: j, timestamp: new Date().toISOString() }));
-      } else if (msg.type === "tiktok.disconnect") {
-        await fetch(`http://localhost:${PORT}/api/tiktok/disconnect`, { method: "POST" });
-      } else if (msg.type === "tiktok.status") {
-        const r = await fetch(`http://localhost:${PORT}/api/tiktok/status`);
-        const j = await r.json();
-        socket.send(JSON.stringify({ type: "broadcast", payload: j, timestamp: new Date().toISOString() }));
-      }
-    } catch { }
-  });
-});
-
-server.listen(PORT, () => console.log(`[server] http://localhost:${PORT} ws:${WS_PATH}`));
+server.listen(env.PORT, () =>
+  console.log(`[server] http://localhost:${env.PORT} ws:${env.WS_PATH}`),
+);

@@ -68,7 +68,7 @@ export interface MemberEventData extends CommonUser {
 }
 
 export interface MemberEvent {
-    type: "member";
+    type: "tiktok.member";
     timestamp: IsoDateTime;
     data: MemberEventData;
 }
@@ -85,7 +85,7 @@ export interface ChatEventData extends CommonUser {
 }
 
 export interface ChatEvent {
-    type: "chat";
+    type: "tiktok.chat";
     timestamp: IsoDateTime;
     data: ChatEventData;
 }
@@ -145,7 +145,7 @@ export interface GiftEventData extends CommonUser {
 }
 
 export interface GiftEvent {
-    type: "gift";
+    type: "tiktok.gift";
     timestamp: IsoDateTime;
     data: GiftEventData;
 }
@@ -165,7 +165,7 @@ export interface RoomUserEventData {
 }
 
 export interface RoomUserEvent {
-    type: "roomUser";
+    type: "tiktok.roomUser";
     timestamp: IsoDateTime;
     data: RoomUserEventData;
 }
@@ -183,7 +183,7 @@ export interface LikeEventData extends CommonUser {
 }
 
 export interface LikeEvent {
-    type: "like";
+    type: "tiktok.like";
     timestamp: IsoDateTime;
     data: LikeEventData;
 }
@@ -200,7 +200,7 @@ export interface SocialEventData extends CommonUser {
 }
 
 export interface SocialEvent {
-    type: "social";
+    type: "tiktok.social";
     timestamp: IsoDateTime;
     data: SocialEventData;
 }
@@ -215,7 +215,7 @@ export interface EmoteEventData extends CommonUser {
 }
 
 export interface EmoteEvent {
-    type: "emote";
+    type: "tiktok.emote";
     timestamp: IsoDateTime;
     data: EmoteEventData;
 }
@@ -231,7 +231,7 @@ export interface EnvelopeEventData extends CommonUser {
 }
 
 export interface EnvelopeEvent {
-    type: "envelope";
+    type: "tiktok.envelope";
     timestamp: IsoDateTime;
     data: EnvelopeEventData;
 }
@@ -245,7 +245,7 @@ export interface QuestionNewEventData extends CommonUser {
 }
 
 export interface QuestionNewEvent {
-    type: "questionNew";
+    type: "tiktok.questionNew";
     timestamp: IsoDateTime;
     data: QuestionNewEventData;
 }
@@ -272,7 +272,7 @@ export interface LinkMicBattleEventData {
 }
 
 export interface LinkMicBattleEvent {
-    type: "linkMicBattle";
+    type: "tiktok.linkMicBattle";
     timestamp: IsoDateTime;
     data: LinkMicBattleEventData;
 }
@@ -295,7 +295,7 @@ export interface LinkMicArmiesEventData {
 }
 
 export interface LinkMicArmiesEvent {
-    type: "linkMicArmies";
+    type: "tiktok.linkMicArmies";
     timestamp: IsoDateTime;
     data: LinkMicArmiesEventData;
 }
@@ -310,7 +310,7 @@ export interface LiveIntroEventData extends CommonUser {
 }
 
 export interface LiveIntroEvent {
-    type: "liveIntro";
+    type: "tiktok.liveIntro";
     timestamp: IsoDateTime;
     data: LiveIntroEventData;
 }
@@ -330,7 +330,7 @@ export interface SubscribeEventData extends CommonUser {
 }
 
 export interface SubscribeEvent {
-    type: "subscribe";
+    type: "tiktok.subscribe";
     timestamp: IsoDateTime;
     data: SubscribeEventData;
 }
@@ -347,7 +347,7 @@ export interface FollowEventData extends CommonUser {
 }
 
 export interface FollowEvent {
-    type: "follow";
+    type: "tiktok.follow";
     timestamp: IsoDateTime;
     data: FollowEventData;
 }
@@ -364,7 +364,7 @@ export interface ShareEventData extends CommonUser {
 }
 
 export interface ShareEvent {
-    type: "share";
+    type: "tiktok.share";
     timestamp: IsoDateTime;
     data: ShareEventData;
 }
@@ -390,6 +390,26 @@ export type TikTokLiveEvent =
     | FollowEvent
     | ShareEvent;
 
+// export type TikTokStatusEvent = {
+//     type: "tiktok.status";
+//     connected: boolean;
+//     roomId?: string;
+//     username?: string;
+//     timestamp: IsoDateTime;
+// };
+
+/* =========================
+ * Connections
+ * ========================= */
+
+export type DBStatusEvent = {
+    type: "db.status";
+    env: string;
+    connected: boolean;
+    error?: string;
+    timestamp: IsoDateTime;
+};
+
 export type TikTokStatusEvent = {
     type: "tiktok.status";
     connected: boolean;
@@ -398,11 +418,61 @@ export type TikTokStatusEvent = {
     timestamp: IsoDateTime;
 };
 
-export type ClientToServerMessage =
-    | { type: "ping"; payload?: unknown }
-    | { type: "echo"; payload: unknown };
 
-export type ServerToClientMessage =
-    | { type: "welcome"; timestamp: IsoDateTime }
-    | { type: "pong"; timestamp: IsoDateTime }
-    | { type: "broadcast"; payload: unknown; timestamp: IsoDateTime };
+/* =========================
+ * TikTok Games
+ * ========================= */
+
+export type GameId = string; // เช่น "quiz", "emoji-race"
+
+export interface PageTimers {
+    selectGameMs: number; // 180000
+    rulesMs: number; // 60000
+    roundSummaryMs: number; // 30000
+    scoreboardMs: number; // 60000
+    supportMs: number; // 60000
+}
+
+export interface RoundSpec {
+    index: number; // 1..N
+    prompt: string; // ข้อคำถาม/โจทย์
+    options?: string[]; // ถ้ามีตัวเลือก
+    answer?: string | number | string[]; // สำหรับตรวจผล (แล้วแต่เกม)
+    durationMs: number; // เวลาเล่นของรอบนี้
+}
+
+export interface GameConfig {
+    id: GameId;
+    name: string;
+    description: string;
+    defaultRounds: number; // 10–20
+    defaultRoundDurationMs: number;
+    timersOverride?: Partial<PageTimers>; // เฉพาะเกมนี้
+}
+
+export interface Session {
+    _id: string;
+    gameId: GameId;
+    status: "idle" | "select" | "rules" | "playing" | "round_summary" | "scoreboard" | "support" | "ended";
+    currentRound: number;
+    totalRounds: number;
+    startedAt: string; // ISO
+}
+
+export interface RoundResult {
+    sessionId: string;
+    roundIndex: number;
+    stats: {
+        correct?: number; wrong?: number; participants: number;
+    };
+    scores: Array<{ userId: string; displayName: string; delta: number; total: number }>; // ใช้รวมคะแนน
+}
+
+export interface LeaderboardEntry {
+    userId: string; displayName: string; total: number;
+}
+
+export interface LeaderboardDaily {
+    date: string; // YYYY-MM-DD
+    entries: LeaderboardEntry[];
+}

@@ -1,11 +1,38 @@
 ﻿import path from "node:path";
 import dotenv from "dotenv";
+import { z } from "zod";
 
-const env = (process.env.NODE_ENV ?? "development").trim();
-dotenv.config({ path: path.resolve(process.cwd(), `.env.${env}`) });
+const nodeEnv = (process.env.NODE_ENV ?? "development").trim();
+dotenv.config({ path: path.resolve(process.cwd(), `.env.${nodeEnv}`) });
 
-export const NODE_ENV = env as "development" | "staging" | "production";
-export const PORT = Number(process.env.PORT ?? 3001);
-export const WS_PATH = process.env.WS_PATH ?? "/ws";
-export const DATABASE_URL = process.env.DATABASE_URL ?? "";
-export const TIKTOK_USERNAME = process.env.TIKTOK_USERNAME ?? "";
+const EnvSchema = z.object({
+  NODE_ENV: z
+    .enum(["development", "staging", "production"])
+    .default("development"),
+  PORT: z.coerce.number().int().positive().default(3001),
+  WS_PATH: z
+    .string()
+    .default("/ws")
+    .transform((p) => (p.startsWith("/") ? p : `/${p}`)),
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  TIKTOK_USERNAME: z
+    .string()
+    .optional()
+    .transform((s) => (s?.trim() ? s : undefined)),
+});
+
+const parsed = EnvSchema.safeParse(process.env);
+if (!parsed.success) {
+  console.error("[env] Invalid environment variables:");
+  for (const issue of parsed.error.issues) {
+    console.error(`- ${issue.path.join(".")}: ${issue.message}`);
+  }
+  process.exit(1);
+}
+
+export const env = parsed.data;
+export type Env = typeof env;
+
+export const IS_DEV = env.NODE_ENV === "development";
+export const IS_STAGING = env.NODE_ENV === "staging";
+export const IS_PROD = env.NODE_ENV === "production";
