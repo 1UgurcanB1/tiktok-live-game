@@ -138,7 +138,7 @@ const TimedProgressBar = forwardRef<ProgressBarHandle, ProgressBarProps>(
       return () => {
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omit 'start' to avoid restarting timer if function identity changes
     }, [duration, autoplay]);
 
     // respond to external paused prop

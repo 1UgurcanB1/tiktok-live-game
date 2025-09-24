@@ -13,7 +13,7 @@ export const GAMES: GameConfig[] = [
   {
     id: "guessWordTH",
     name: "ทายคำภาษาไทย",
-    category: "geussWord",
+    category: "guessWord",
     categoryDescription: "ทายคำ",
     description: "",
     defaultRounds: 10,

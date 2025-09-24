@@ -6,7 +6,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
     ports:
-      - "27018:27018"
+      - "27018:27017"
     volumes:
       - ./.docker/staging/mongo:/data/db
     restart: unless-stopped
