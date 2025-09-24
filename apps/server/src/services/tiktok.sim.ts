@@ -3,6 +3,7 @@ import {
   GiftEventData,
   FollowEventData,
   ShareEventData,
+  LikeEventData,
 } from "@tiktok/types";
 import { randomId, sleep } from "@tiktok/utils";
 import fs from "node:fs";
@@ -13,6 +14,7 @@ type EventMap = {
   gift: GiftEventData;
   follow: FollowEventData;
   share: ShareEventData;
+  like: LikeEventData;
   streamEnd: unknown;
   disconnected: unknown;
 };
@@ -30,6 +32,7 @@ export class SimulatedTikTokConnection {
   private running = false;
   private chatMessages: string[];
   private names: string[];
+  private totalLikeCount = 0;
 
   constructor(username: string) {
     this.username = username;
@@ -85,6 +88,7 @@ export class SimulatedTikTokConnection {
     this.spawnGiftLoop();
     this.spawnShareLoop();
     this.spawnFollowLoop();
+    this.spawnLikeLoop();
     return { roomId: this.roomId };
   }
 
@@ -194,6 +198,31 @@ export class SimulatedTikTokConnection {
           createTime: Date.now().toString(),
         };
         this.emit("follow", { ...base } as FollowEventData);
+      }
+    };
+    run();
+  }
+
+  private spawnLikeLoop() {
+    const run = async () => {
+      while (this.running) {
+        const delay = randInt(300, 1200);
+        await sleep(delay);
+        if (!this.running) break;
+        const likeCount = pick([1, 1, 1, 2, 2, 3, 5, 10]);
+        this.totalLikeCount += likeCount;
+        const data: LikeEventData = {
+          userId: randUserId(),
+          secUid: randomId(24),
+          uniqueId: `user_${randInt(1000, 9999)}`,
+          nickname: pick(this.names) + randSuffix(),
+          profilePictureUrl: null,
+          likeCount,
+          totalLikeCount: this.totalLikeCount,
+          msgId: randomId(12),
+          createTime: Date.now().toString(),
+        };
+        this.emit("like", data);
       }
     };
     run();

@@ -1,4 +1,4 @@
-import { ChatEventData, GiftEventData, SocialEventData } from "@tiktok/types";
+import { ChatEventData, GiftEventData, SocialEventData, LikeEventData } from "@tiktok/types";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
@@ -6,6 +6,7 @@ const require = createRequire(import.meta.url);
 type EventMap = {
   chat: ChatEventData;
   gift: GiftEventData;
+  like: LikeEventData;
   social: SocialEventData;
   streamEnd: unknown;
   disconnected: unknown;

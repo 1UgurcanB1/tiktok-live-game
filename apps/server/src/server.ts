@@ -4,7 +4,7 @@ import { env } from "./env.js";
 import { connectMongo } from "./db.js";
 import { attachWSS, broadcast } from "./lib/ws.js";
 import { tiktok } from "./services/tiktok.service.js";
-import type { ChatEvent, GiftEvent, TikTokStatusEvent, FollowEvent, ShareEvent } from "@tiktok/types";
+import type { ChatEvent, GiftEvent, TikTokStatusEvent, FollowEvent, ShareEvent, LikeEvent } from "@tiktok/types";
 import { toISO } from "@tiktok/utils";
 
 async function main() {
@@ -49,6 +49,14 @@ async function main() {
     };
     broadcast(ev);
   });
+    tiktok.on("like", (data) => {
+      const ev: LikeEvent = {
+        type: "tiktok.like",
+        data,
+        timestamp: toISO(new Date()),
+      };
+      broadcast(ev);
+    });
   tiktok.on("disconnected", () => {
     const ev: TikTokStatusEvent = {
       type: "tiktok.status",

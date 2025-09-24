@@ -6,6 +6,7 @@ import type {
   GiftEventData,
   FollowEventData,
   ShareEventData,
+  LikeEventData,
   SocialEventData,
 } from "@tiktok/types";
 
@@ -14,6 +15,7 @@ type EventMap = {
   gift: GiftEventData;
   follow: FollowEventData;
   share: ShareEventData;
+  like: LikeEventData;
   social: SocialEventData;
   streamEnd: unknown;
   disconnected: unknown;
@@ -81,6 +83,9 @@ class TikTokSwitchingService {
       this.listeners.gift?.forEach((cb) =>
         this.real.on("gift", cb as (v: GiftEventData) => void)
       );
+      this.listeners.like?.forEach((cb) =>
+        this.real.on("like", cb as (v: LikeEventData) => void)
+      );
       return { roomId: this._roomId };
     } else {
       this.sim = new SimulatedTikTokConnection(username);
@@ -104,6 +109,9 @@ class TikTokSwitchingService {
       );
       this.listeners.share?.forEach((cb) =>
         this.sim!.on("share", cb as (v: ShareEventData) => void)
+      );
+      this.listeners.like?.forEach((cb) =>
+        this.sim!.on("like", cb as (v: LikeEventData) => void)
       );
       return { roomId: this._roomId };
     }
