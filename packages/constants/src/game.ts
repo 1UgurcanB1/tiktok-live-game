@@ -1,5 +1,4 @@
-import type { GameConfig } from "@tiktok/types";
-import type { PageTimers } from "@tiktok/types";
+import type { PageTimers, GameConfig } from "@tiktok/types";
 
 export const DEFAULT_TIMERS: PageTimers = {
   selectGameMs: 3 * 60_000,
