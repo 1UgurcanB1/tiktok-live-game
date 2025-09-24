@@ -19,6 +19,10 @@ const EnvSchema = z.object({
     .string()
     .optional()
     .transform((s) => (s?.trim() ? s : undefined)),
+  // เลือกโหมดการเชื่อมต่อ TikTok: จริง หรือ จำลอง
+  TIKTOK_MODE: z
+    .enum(["real", "sim"]) // real = tiktok-live-connector, sim = สุ่มอีเวนต์
+    .default(process.env.NODE_ENV === "development" ? "sim" : "real"),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

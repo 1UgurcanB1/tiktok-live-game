@@ -4,7 +4,7 @@ import { env } from "./env.js";
 import { connectMongo } from "./db.js";
 import { attachWSS, broadcast } from "./lib/ws.js";
 import { tiktok } from "./services/tiktok.service.js";
-import type { ChatEvent, GiftEvent, TikTokStatusEvent } from "@tiktok/types";
+import type { ChatEvent, GiftEvent, TikTokStatusEvent, FollowEvent, ShareEvent } from "@tiktok/types";
 import { toISO } from "@tiktok/utils";
 
 async function main() {
@@ -28,6 +28,22 @@ async function main() {
   tiktok.on("gift", (data) => {
     const ev: GiftEvent = {
       type: "tiktok.gift",
+      data,
+      timestamp: toISO(new Date()),
+    };
+    broadcast(ev);
+  });
+  tiktok.on("follow", (data) => {
+    const ev: FollowEvent = {
+      type: "tiktok.follow",
+      data,
+      timestamp: toISO(new Date()),
+    };
+    broadcast(ev);
+  });
+  tiktok.on("share", (data) => {
+    const ev: ShareEvent = {
+      type: "tiktok.share",
       data,
       timestamp: toISO(new Date()),
     };

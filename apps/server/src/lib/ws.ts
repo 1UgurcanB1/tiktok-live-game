@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import type { Server } from "node:http";
-import type { ChatEvent, GiftEvent, TikTokStatusEvent, DBStatusEvent } from "@tiktok/types";
+import type { ChatEvent, GiftEvent, TikTokStatusEvent, DBStatusEvent, FollowEvent, ShareEvent } from "@tiktok/types";
 import { env } from "../env.js";
 
 // ถ้าคุณมี union type ของอีเวนต์ทั้งหมดใน @tiktok/types กำหนดมาแทน any ก็ได้
@@ -13,7 +13,14 @@ export function attachWSS(server: Server) {
   });
 }
 
-type OutboundEvent = ChatEvent | GiftEvent | TikTokStatusEvent | DBStatusEvent | unknown;
+type OutboundEvent =
+  | ChatEvent
+  | GiftEvent
+  | FollowEvent
+  | ShareEvent
+  | TikTokStatusEvent
+  | DBStatusEvent
+  | unknown;
 
 export function broadcast(event: OutboundEvent) {
   if (!wss) return;

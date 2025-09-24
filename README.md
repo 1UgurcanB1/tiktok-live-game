@@ -90,6 +90,26 @@ The server loads `.env.development` automatically; the web app uses Vite's `.env
 
 ---
 
+## TikTok Simulation Mode
+
+You can simulate going live on TikTok by emitting random chat/gift/follow/share events from the server.
+
+- Configure default mode in `apps/server/.env.development`:
+
+```
+TIKTOK_MODE=sim
+```
+
+- Or choose per-connection via API:
+
+POST /api/tiktok/connect
+{
+  "username": "telechubbiies",
+  "mode": "sim" // or "real"
+}
+
+While in sim mode, the server periodically broadcasts events over WebSocket at `WS_PATH`.
+
 ติดตั้ง Library Dependency
 
 ติดตั้งเฉพาะ web
