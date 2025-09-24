@@ -25,8 +25,13 @@ export default function MinimalStatus() {
     const ac = new AbortController();
     getTiktokStatus({ signal: ac.signal })
       .then((h) => {
-        setTkOk(!!h.connected);
-        setTkUsername(h.username || "Tiktok");
+        if (h.roomId) {
+          setTkOk(!!h.connected);
+          setTkUsername(h.username ?? "Tiktok");
+        } else {
+          setTkOk(false);
+          setTkUsername("Tiktok");
+        }
       })
       .catch(() => {
         setTkOk(false);
@@ -42,8 +47,13 @@ export default function MinimalStatus() {
   useBroadcast<DBStatusEvent>("db.status", onDBStatus);
 
   const onTiktokStatus = useCallback((e: TikTokStatusEvent) => {
-    setTkOk(!!e.connected);
-    setTkUsername(e.username || "Tiktok");
+    if (e.roomId) {
+      setTkOk(!!e.connected);
+      setTkUsername(e.username ?? "Tiktok");
+    } else {
+      setTkOk(false);
+      setTkUsername("Tiktok");
+    }
   }, []);
   useBroadcast<TikTokStatusEvent>("tiktok.status", onTiktokStatus);
 

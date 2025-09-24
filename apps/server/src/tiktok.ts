@@ -45,14 +45,43 @@ export class TikTokLiveService {
   }
 
   async connect(username: string) {
+    // If there was an existing connection, tear it down first
     if (this.conn) await this.disconnect();
 
-    this._username = username;
-    this.conn = new WebcastPushConnection(username);
+    // Prepare a new connection but don't mark as connected yet
+    const pending = new WebcastPushConnection(username);
+    try {
+      const state = await pending.connect(); // { roomId: string | number }
 
-    const state = await this.conn.connect(); // { roomId: string | number }
-    this._roomId = String(state.roomId);
-    return state;
+      // Bind lifecycle events to keep internal state in sync
+      pending.on?.("disconnected", () => {
+        this.conn = null;
+        this._roomId = null;
+        this._username = null;
+      });
+      pending.on?.("streamEnd", () => {
+        this.conn = null;
+        this._roomId = null;
+        this._username = null;
+      });
+
+      // Mark as connected only after success
+      this.conn = pending;
+      this._username = username;
+      this._roomId = String(state.roomId);
+      return state;
+    } catch (e) {
+      // Ensure we don't leave a half-open state
+      try {
+        await pending.disconnect?.();
+      } catch {
+        // ignore
+      }
+      this.conn = null;
+      this._username = null;
+      this._roomId = null;
+      throw e;
+    }
   }
 
   async disconnect() {

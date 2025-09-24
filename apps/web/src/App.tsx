@@ -1,32 +1,69 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./app/router";
 import PageTransition from "./components/PageTransition";
-import SystemStatus from "./components/SystemStatus";
 import { ws } from "./services/ws";
 import { env } from "./env";
+import { tiktokConnect } from "./services/api";
+import SystemStatus from "./components/SystemStatus";
 
 // ถ้ามี Toast/Modal กลางระบบ ค่อยเสียบเพิ่มตรงนี้
 // import { Toaster } from "./components/Toast";
 
 export default function App() {
+  const [booted, setBooted] = useState(false);
+  const abortedRef = useRef(false);
+
   useEffect(() => {
-    if (!env.VITE_WS_URL) return;
-    ws.connect(env.VITE_WS_URL);
+    const ac = new AbortController();
+    abortedRef.current = false;
+
+    // 1) Connect WS immediately if configured (non-blocking)
+    if (env.VITE_WS_URL) {
+      ws.connect(env.VITE_WS_URL);
+    }
+
+    // 2) Try TikTok connect; wait for it to settle before rendering
+    const init = async () => {
+      try {
+        const username = env.VITE_TIKTOK_USERNAME?.trim();
+        if (username) {
+          const res = await tiktokConnect(username, { signal: ac.signal });
+          console.info("Tiktok Connected successfully:", res);
+        } else {
+          console.info("Skip TikTok connect: VITE_TIKTOK_USERNAME is empty");
+        }
+      } catch (e) {
+        console.info("Unable to connect TikTok:", e);
+      } finally {
+        if (!abortedRef.current) setBooted(true);
+      }
+    };
+
+    init().catch(console.error);
+
+    return () => {
+      abortedRef.current = true;
+      ac.abort();
+    };
   }, []);
 
   return (
     <div className="min-h-dvh bg-neutral-900  text-white font-kanit">
-      <Suspense fallback={<Fallback />}>
-        <PageTransition>
-          <div className="min-h-dvh w-full grid place-items-center p-4">
-            <div className="relative grid w-[min(92vw,500px)] aspect-[9/16] bg-midnight-indigo text-arctic-sky rounded-3xl shadow-2xl overflow-hidden min-h-0 min-w-0 p-6">
-              <SystemStatus />
-              <RouterProvider router={router} />
+      {!booted ? (
+        <Fallback />
+      ) : (
+        <Suspense fallback={<Fallback />}>
+          <PageTransition>
+            <div className="min-h-dvh w-full grid place-items-center p-4">
+              <div className="relative grid w-[min(92vw,500px)] aspect-[9/16] bg-midnight-indigo text-arctic-sky rounded-3xl shadow-2xl overflow-hidden min-h-0 min-w-0 p-6">
+                <SystemStatus />
+                <RouterProvider router={router} />
+              </div>
             </div>
-          </div>
-        </PageTransition>
-      </Suspense>
+          </PageTransition>
+        </Suspense>
+      )}
       {/* <Toaster /> */}
     </div>
   );
