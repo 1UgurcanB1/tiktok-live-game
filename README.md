@@ -110,6 +110,20 @@ POST /api/tiktok/connect
 
 While in sim mode, the server periodically broadcasts events over WebSocket at `WS_PATH`.
 
+### Mock files (committed)
+
+The simulator uses simple text files as mock data by default:
+
+- `apps/server/mock/tiktok_chat_messages.txt` — one chat message per line
+- `apps/server/mock/tiktok_names.txt` — one display name per line
+
+Lines starting with `#` are treated as comments and ignored. You can customize these files directly in the repo. For per-machine overrides, set environment variables to point at custom files:
+
+- `TIKTOK_SIM_CHAT_FILE` — absolute or relative path to a chat lines file
+- `TIKTOK_SIM_NAMES_FILE` — absolute or relative path to a names file
+
+The server will use the first existing path from: env override ➜ default repo file ➜ built-in fallback list.
+
 ติดตั้ง Library Dependency
 
 ติดตั้งเฉพาะ web

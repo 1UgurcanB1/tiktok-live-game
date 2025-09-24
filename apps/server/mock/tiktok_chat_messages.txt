@@ -1,0 +1,12 @@
+# One message per line. Lines starting with # are ignored.
+# This file is not committed to Git by default; see root .gitignore.
+สวัสดีครับ
+สวัสดีค่า
+แจกของหน่อย
+เกมอะไรครับ
+สุดยอดเลย
+ขอคะแนนด้วย
+Nice!
+Let's go!
+5555
+GG

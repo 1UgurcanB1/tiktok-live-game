@@ -1,0 +1,17 @@
+# Local display names for simulator (one per line). Lines starting with # are ignored.
+Alice
+Bob
+Carol
+Dave
+Eve
+Mallory
+Oscar
+Peggy
+Victor
+Walter
+Trudy
+Sybil
+Grace
+Heidi
+Ivan
+Judy
