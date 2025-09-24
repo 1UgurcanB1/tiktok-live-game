@@ -2,7 +2,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./app/router";
 import PageTransition from "./components/PageTransition";
-import { ws } from "./services/ws";
+import { events, ws } from "./services/ws";
 import { env } from "./env";
 import { tiktokConnect } from "./services/api";
 import SystemStatus from "./components/SystemStatus";
@@ -28,7 +28,10 @@ export default function App() {
       try {
         const username = env.VITE_TIKTOK_USERNAME?.trim();
         if (username) {
-          const res = await tiktokConnect(username, { signal: ac.signal });
+          const res = await tiktokConnect(username, {
+            signal: ac.signal,
+            mode: env.VITE_TIKTOK_MODE,
+          });
           console.info("Tiktok Connected successfully:", res);
         } else {
           console.info("Skip TikTok connect: VITE_TIKTOK_USERNAME is empty");
@@ -40,11 +43,22 @@ export default function App() {
       }
     };
 
+    // 2.1) Log all TikTok events for debugging
+    const offLog = events.on("tiktok.*", (ev: unknown) => {
+      try {
+        const obj = ev as { type?: string };
+        console.info("[tiktok]", obj?.type ?? "event", ev);
+      } catch {
+        // no-op
+      }
+    });
+
     init().catch(console.error);
 
     return () => {
       abortedRef.current = true;
       ac.abort();
+      offLog();
     };
   }, []);
 

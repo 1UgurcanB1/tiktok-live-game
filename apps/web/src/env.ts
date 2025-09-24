@@ -7,6 +7,7 @@ const raw = {
   VITE_API_BASE: import.meta.env.VITE_API_BASE,
   VITE_TIKTOK_USERNAME: import.meta.env.VITE_TIKTOK_USERNAME,
   VITE_WS_URL: import.meta.env.VITE_WS_URL,
+  VITE_TIKTOK_MODE: import.meta.env.VITE_TIKTOK_MODE,
 } as const;
 
 const EnvSchema = z.object({
@@ -14,6 +15,7 @@ const EnvSchema = z.object({
   VITE_API_BASE: z.string().default("/"),
   VITE_TIKTOK_USERNAME: z.string().min(1).optional(),
   VITE_WS_URL: z.string().url().optional(), // ถ้าให้ users กำหนด WS เอง
+  VITE_TIKTOK_MODE: z.enum(["real", "sim"]).optional(),
 });
 
 export const env = EnvSchema.parse(raw);

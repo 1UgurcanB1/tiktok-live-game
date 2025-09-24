@@ -124,11 +124,14 @@ export function getTiktokStatus(opts?: ReqOpts) {
   );
 }
 
-export function tiktokConnect(username: string, opts?: ReqOpts) {
+export function tiktokConnect(
+  username: string,
+  opts?: ReqOpts & { mode?: "real" | "sim" },
+) {
   return request<TikTokStatusEvent>(
     "POST",
     "/api/tiktok/connect",
-    { username },
+    { username, mode: opts?.mode },
     opts,
   );
 }

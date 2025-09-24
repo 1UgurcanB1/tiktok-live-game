@@ -63,6 +63,11 @@ class WSClient {
         const msg = JSON.parse(text) as unknown;
         if (isServerEvent(msg)) {
           events.emit(msg.type, msg as never);
+          // Emit wildcard for all TikTok events
+          const t = (msg as { type: string }).type;
+          if (typeof t === "string" && t.startsWith("tiktok.")) {
+            events.emit("tiktok.*", msg as never);
+          }
         }
       } catch {
         // ignore malformed payload
