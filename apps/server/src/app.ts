@@ -21,9 +21,9 @@ export function createApp(): Application {
   );
 
   // error handler กลาง (Express 5 รองรับ async)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // The `_next` parameter is intentionally unused here, but must be present for Express to recognize this as an error-handling middleware.
-  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  // The `_` parameter is intentionally unused here, but must be present for Express to recognize this as an error-handling middleware.
+  app.use((err: unknown, _req: Request, res: Response, _: NextFunction) => {
+    void _; // mark unused param as intentionally unused for typing
     console.error(err);
     res.status(500).json({ ok: false, error: "Internal Server Error" });
   });
