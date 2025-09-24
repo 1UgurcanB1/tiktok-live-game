@@ -90,6 +90,26 @@ The server loads `.env.development` automatically; the web app uses Vite's `.env
 
 ---
 
+## TikTok Simulation Mode
+
+You can simulate going live on TikTok by emitting random chat/gift/follow/share events from the server.
+
+- Configure default mode in `apps/server/.env.development`:
+
+```
+TIKTOK_MODE=sim
+```
+
+- Or choose per-connection via API:
+
+POST /api/tiktok/connect
+{
+  "username": "telechubbiies",
+  "mode": "sim" // or "real"
+}
+
+While in sim mode, the server periodically broadcasts events over WebSocket at `WS_PATH`.
+
 ติดตั้ง Library Dependency
 
 ติดตั้งเฉพาะ web
@@ -185,51 +205,3 @@ tiktok-live-game/
 - Edit the TikTok username in `.env.*` (server and web) if needed.
 
 ---
-
-ฉันจะสร้างเกมไว้เล่นกับผู้ชมในไลฟ์ Tiktok 
-UI :React + Tailwind Plus 
-Server: TypeScript + Node.js + Express + Websocket 
-DB: Postgresql+ docker ฉันใช้ Postgresql 17 
-docker ให้ติดตั้ง pgadmin มาด้วยนะ
-
-อยากให้มีการแยก environment (.env)
-development, staging, production
-db:
-tiktok_live สำหรับ prod
-tiktok_live_stag สำหรับ staging 
-tiktok_live_dev สำหรับ developemnt 
-
-ไม่ต้องใช้ prisma
-
-ดึงแชท live tiktok ด้วย https://www.npmjs.com/package/tiktok-live-connector 
-tiktok username: telechubbiies
-
-ฉันอยากให้ server กับ ui อยู่ในโปรเจ็คเดียวกัน 
-ใช้ Turborepo ด้วย ช่วยเขียนโครงสร้างโปรเจ็ค 
-ขอแบบเรียบง่าย ง่ายต่อการ coding และพร้อมวิธีติดตั้ง 
-
-โปรเจ็คชื่อ tiktok-live-game
-ส่งโปรเจ็คมาเป็น .zip ได้เลย
-
----
-
-คุณช่วยฉันสร้างโปรเจค web app
-UI :React(vite) + tailwindcss @tailwindcss/vite
-Server: TypeScript + Node.js + Express + Websocket 
-DB: Postgresql+ docker ฉันใช้ Postgresql 17 
-docker ให้ติดตั้ง pgadmin มาด้วยนะ
-
-code มี interface สำหรับ server web และใช้ร่วมกันด้วยนะ
-
-อยากให้มีการแยก environment (.env)
-development, staging, production
-db:
-tiktok_live สำหรับ prod
-tiktok_live_staging สำหรับ staging 
-tiktok_live_dev สำหรับ developemnt 
-
-ฉันอยากให้ server กับ ui อยู่ในโปรเจ็คเดียวกัน 
-ใช้ Turborepo ด้วย
-
-คุณช่วยฉันสร้างโปรเจ็คทีละขั้นตอน
-ค่อย ๆ install dependecy/library ไปทีละตัว เป้นลำดับขั้นตอนไป

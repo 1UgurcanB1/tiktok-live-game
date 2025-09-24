@@ -1,25 +1,25 @@
 services:
-  db:
-    image: postgres:17
-    container_name: tiktok_pg_prod
+  mongo:
+    image: mongo:7
+    container_name: tiktok_mongo_prod
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: tiktok_live
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
     ports:
-      - "5434:5432"
+      - "27019:27017"
     volumes:
-      - ./.docker/prod/db:/var/lib/postgresql/data
+      - ./.docker/prod/mongo:/data/db
+    restart: unless-stopped
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: tiktok_pgadmin_prod
+  mongo-express:
+    image: mongo-express:1
+    container_name: tiktok_mongoexpress_prod
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@gamil.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: root
+      ME_CONFIG_MONGODB_URL: mongodb://root:root@mongo:27019/
     ports:
-      - "5052:80"
+      - "8083:8083"
     depends_on:
-      - db
-    volumes:
-      - ./.docker/prod/pgadmin:/var/lib/pgadmin
+      - mongo
+    restart: unless-stopped

@@ -14,6 +14,11 @@
             "cache": false,
             "persistent": true
         },
-        "lint": {}
+        "lint": {
+            "cache": true
+        },
+        "lint:fix": {
+            "cache": false
+        }
     }
 }
