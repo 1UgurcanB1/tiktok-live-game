@@ -26,6 +26,12 @@ export interface GameConfig {
     description: string;
     defaultRounds: number; // 10–20
     defaultRoundDurationMs: number;
+    /** optional category metadata for grouping/filtering in UI */
+    category?: string;
+    categoryDescription?: string;
+    gameImage?: string; // URL or asset path
+    /** optional static rules copy for UI */
+    rules?: string[];
     timersOverride?: Partial<PageTimers>; // เฉพาะเกมนี้
 }
 
