@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { DEFAULT_TIMERS } from "../config/timers";
+import { DEFAULT_TIMERS } from "@tiktok/constants";
 import PageTransition from "../components/PageTransition";
 
 export default function Scoreboard() {

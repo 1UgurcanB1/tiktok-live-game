@@ -1,56 +1,100 @@
-import { useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { GAMES } from "../config/games.config";
-import { DEFAULT_TIMERS } from "../config/timers";
-import { useGameStore } from "../app/store/game.store";
+import { useMemo } from "react";
 import PageTransition from "../components/PageTransition";
+import TimedProgressBar from "../components/TimedProgressBar";
+import { DEFAULT_TIMERS } from "@tiktok/constants";
+
+type GameItem = {
+  id: string | number;
+  title: string;
+  category: string; // ประเภทเกม
+  votes: number;
+  highlight?: boolean; // true = วงกลมลำดับสีส้ม
+  onClick?: (id: string | number) => void;
+};
 
 export default function GameSelect() {
-  const nav = useNavigate();
-  const { setGame } = useGameStore();
-  const deadline = useMemo(() => Date.now() + DEFAULT_TIMERS.selectGameMs, []);
-  const left = Math.max(0, deadline - Date.now());
+  // mock data – ปรับ/แทนที่ด้วย API ของคุณได้
+  const games: GameItem[] = useMemo(
+    () => [
+      { id: 0, title: "สุ่มเกม", category: "สุ่ม", votes: 15, highlight: true },
+      {
+        id: 1,
+        title: "เกมทายคำภาษาไทย",
+        category: "ทายคำ",
+        votes: 25,
+      },
+      { id: 2, title: "เกมเวิร์ดเดิลภาษาไทย", category: "ทายคำ", votes: 12 },
+      { id: 3, title: "เกมคอนเท็กซ์โตภาษาไทย", category: "ทายคำ", votes: 8 },
+      { id: 4, title: "เกมทายธงชาติต่างประเทศ", category: "ทายภาพ", votes: 4 },
+      { id: 5, title: "เกมทายคำจังหวัด", category: "ทายคำ", votes: 15 },
+    ],
+    [],
+  );
 
-  useEffect(() => {
-    const id = window.setTimeout(() => {
-      // หมดเวลา → auto เลือกเกมแรก
-      if (GAMES[0]) {
-        setGame(GAMES[0]);
-        nav("/rules");
-      }
-    }, left);
-    return () => clearTimeout(id);
-  }, [left, nav, setGame]);
+  const handleClick = (id: GameItem["id"]) => {
+    alert(`เลือกเกม id=${id}`);
+  };
 
   return (
-    <PageTransition>
-      <main className="p-6 max-w-4xl mx-auto">
-        <header className="flex items-end justify-between mb-6">
-          <h2 className="text-2xl font-bold">
-            เลือกเกม (เหลือ {Math.ceil(left / 1000)}s)
-          </h2>
-        </header>
-        <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {GAMES.map((g) => (
-            <li
+    <PageTransition className="gap-5">
+      <TimedProgressBar
+        duration={DEFAULT_TIMERS.selectGameMs}
+        onComplete={() => console.log("done!")}
+        className="w-85"
+        trackClassName="bg-white/20"
+        barClassName="bg-tangerine-pop"
+      ></TimedProgressBar>
+      <div className="flex flex-col">
+        {/* Header strip */}
+        <h2 className="text-3xl text-white text-center font-extrabold">
+          เลือกเกม
+        </h2>
+        <h4 className="text-xl text-arctic-sky text-center">
+          (สำหรับผู้ติดตามเท่านั้น)
+        </h4>
+        <hr className="mt-6" />
+
+        {/* Body */}
+        <div className="p-5 space-y-5">
+          {games.map((g) => (
+            <button
               key={g.id}
-              className="rounded-2xl border p-4 hover:shadow transition"
+              onClick={() => (g.onClick ?? handleClick)(g.id)}
+              className="w-full text-left group"
             >
-              <h3 className="text-lg font-semibold">{g.name}</h3>
-              <p className="text-sm opacity-70 mb-3">{g.description}</p>
-              <button
-                className="px-3 py-2 rounded-xl shadow"
-                onClick={() => {
-                  setGame(g);
-                  nav("/rules");
-                }}
-              >
-                เลือกเกมนี้
-              </button>
-            </li>
+              {/* meta */}
+              <div className="px-2 text-lg text-[#a7d3ff]/90 flex items-center gap-4 mb-1">
+                <span>
+                  <span className="opacity-80">ประเภท:</span>{" "}
+                  <span className="font-semibold">{g.category}</span>
+                </span>
+                <span className="opacity-80">
+                  โหวต:{" "}
+                  <span className="font-semibold text-white">{g.votes}</span>
+                </span>
+              </div>
+
+              {/* pill */}
+              <div className="relative bg-black text-white rounded-full h-14 flex items-center pl-16 pr-5 transition-transform duration-150 group-active:scale-[0.98]">
+                {/* index bubble */}
+                <div
+                  className={[
+                    "absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full grid place-items-center text-[#1b2a52] font-extrabold text-4xl",
+                    g.highlight ? "bg-[#ffa654]" : "bg-[#b9dcff]",
+                  ].join(" ")}
+                >
+                  {g.id}
+                </div>
+
+                {/* title */}
+                <div className="font-medium text-lg tracking-wide truncate">
+                  {g.title}
+                </div>
+              </div>
+            </button>
           ))}
-        </ul>
-      </main>
+        </div>
+      </div>
     </PageTransition>
   );
 }

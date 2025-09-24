@@ -16,11 +16,15 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-dvh bg-white text-black">
+    <div className="min-h-dvh bg-neutral-900  text-white font-kanit">
       <Suspense fallback={<Fallback />}>
         <PageTransition>
-          <SystemStatus />
-          <RouterProvider router={router} />
+          <div className="min-h-dvh w-full grid place-items-center p-4">
+            <div className="relative grid w-[min(92vw,500px)] aspect-[9/16] bg-midnight-indigo text-arctic-sky rounded-3xl shadow-2xl overflow-hidden min-h-0 min-w-0 p-6">
+              <SystemStatus />
+              <RouterProvider router={router} />
+            </div>
+          </div>
         </PageTransition>
       </Suspense>
       {/* <Toaster /> */}

@@ -13,6 +13,7 @@
     "lint:fix": "turbo run lint:fix",
     "types:build": "pnpm --filter \"@tiktok/types\" build",
     "utils:build": "pnpm --filter \"@tiktok/utils\" build",
+    "constants:build": "pnpm --filter \"@tiktok/constants\" build",
     "dev:up": "docker compose -f docker-compose.dev.yml up -d",
     "dev:server": "cross-env NODE_ENV=development pnpm --filter \"@tiktok/server\" dev",
     "dev:web": "pnpm --filter \"@tiktok/web\" dev -- --mode development",

@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { DEFAULT_TIMERS } from "../config/timers";
+import { DEFAULT_TIMERS } from "@tiktok/constants";
 import { useGameStore } from "../app/store/game.store";
 import PageTransition from "../components/PageTransition";
 

@@ -11,6 +11,7 @@
     "lint:fix": "eslint . --ext .ts --cache --fix && prettier --write ."
   },
   "dependencies": {
+    "@tiktok/constants": "workspace:*",
     "@tiktok/types": "workspace:*",
     "@tiktok/utils": "workspace:*",
     "cors": "2.8.5",

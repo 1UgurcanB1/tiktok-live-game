@@ -48,7 +48,7 @@ export default function MinimalStatus() {
   useBroadcast<TikTokStatusEvent>("tiktok.status", onTiktokStatus);
 
   return (
-    <div className="fixed top-3 right-3 z-50 text-xs bg-white/80 backdrop-blur rounded-full px-2 py-1.5 shadow-sm">
+    <div className="absolute top-3 right-3 z-50 text-xs bg-white/80 text-midnight-indigo backdrop-blur rounded-full px-2 py-1.5 shadow-sm">
       <span className="inline-flex items-center gap-1 mr-2">
         <Dot ok={dbOk} /> DB
       </span>
