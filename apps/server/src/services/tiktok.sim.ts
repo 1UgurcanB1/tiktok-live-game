@@ -255,8 +255,15 @@ async function loadFirstExistingAsync(
         .map((s) => s.trim())
         .filter((s) => s && !s.startsWith("#"));
       if (lines.length) return lines;
-    } catch {
-      // try next
+    } catch (err) {
+      // Provide context to help diagnose configuration/path issues
+      const e = err as { code?: string; message?: string };
+      console.warn("[tiktok.sim] Failed to read mock file", {
+        path: p,
+        code: e?.code,
+        message: e?.message,
+      });
+      // try next candidate
     }
   }
   return fallback;
