@@ -9,6 +9,7 @@ import { events } from "../services/ws";
 import { useGameStore } from "../app/store/game.store";
 import SystemStatus from "../components/SystemStatus";
 import { useTranslation } from "react-i18next";
+import { localized } from "../lib/localize";
 
 type GameItem = {
   order: number; // 0..5 แสดงตัวเลขนี้แทน id
@@ -22,7 +23,7 @@ type GameItem = {
 export default function GameSelect() {
   const navigate = useNavigate();
   const setGame = useGameStore((s) => s.setGame);
-  const { t } = useTranslation(["gameSelect", "common"]);
+  const { t, i18n } = useTranslation(["gameSelect", "common"]);
 
   // Keep lightweight recent history in localStorage to reduce repeats across sessions
   const [recent, setRecent] = useState<string[]>(() => {
@@ -64,15 +65,15 @@ export default function GameSelect() {
       const idx = i + 1;
       arr.push({
         order: idx,
-        title: g.name,
-        category: g.categoryDescription ?? "",
+        title: localized(g, "name"),
+        category: localized(g, "categoryDescription"),
         votes: votes[idx],
         highlight: leaderOrder === idx,
       });
     }
     return arr;
     // maxVotes derived from votes; not needed in dependency list separately
-  }, [leaderOrder, selected, votes, t]);
+  }, [leaderOrder, selected, votes, t, i18n.language]);
 
   // Update leaderOrder only when there is a unique leader; ignore ties
   useEffect(() => {
