@@ -15,6 +15,13 @@ export function localized<T extends Record<string, any>, K extends string>(
     targetLangPrefix?: string; // default 'en'
     emptyFactory?: () => any; // provide custom empty value; default inferred
     treatEmptyArrayObjectAsValue?: boolean; // if true, [] / {} are accepted (not considered empty)
+    /**
+     * Mapping of language prefixes → suffix used to build alt key.
+     * Example: { en: 'En', ja: 'Ja', th: '' }
+     * If provided, this takes precedence over (suffix + targetLangPrefix) logic.
+     * Matching rule: pick the longest key in the map that is a prefix of current lang (case-insensitive).
+     */
+    suffixMap?: Record<string, string>;
   },
 ): any {
   const {
@@ -23,6 +30,7 @@ export function localized<T extends Record<string, any>, K extends string>(
     targetLangPrefix = "en",
     emptyFactory,
     treatEmptyArrayObjectAsValue = false,
+    suffixMap,
   } = options || {};
 
   // Helper to decide an "empty" placeholder based on existing base value (best-effort)
@@ -47,11 +55,33 @@ export function localized<T extends Record<string, any>, K extends string>(
   if (!obj) return inferEmpty("");
 
   const baseVal = (obj as any)[key];
-  const altKey = key + suffix;
+
+  // Determine dynamic suffix when suffixMap is present.
+  let resolvedSuffix = suffix;
+  let matchedByMap = false;
+  if (suffixMap && Object.keys(suffixMap).length > 0) {
+    const lowerLang = lang.toLowerCase();
+    // Longest prefix match provides determinism when overlapping keys (e.g., 'en' vs 'en-gb')
+    let bestKey: string | undefined;
+    for (const k of Object.keys(suffixMap)) {
+      const lk = k.toLowerCase();
+      if (lowerLang.startsWith(lk)) {
+        if (!bestKey || lk.length > bestKey.length) bestKey = k;
+      }
+    }
+    if (bestKey) {
+      resolvedSuffix = suffixMap[bestKey];
+      matchedByMap = true;
+    }
+  }
+
+  const altKey = key + resolvedSuffix;
 
   const wantAlt = lang.toLowerCase().startsWith(targetLangPrefix.toLowerCase());
   const hasAlt = Object.prototype.hasOwnProperty.call(obj, altKey);
-  if (wantAlt && hasAlt) {
+  // If using suffixMap, rely on match presence; otherwise use targetLangPrefix rule.
+  const shouldTryAlt = matchedByMap ? hasAlt : wantAlt && hasAlt;
+  if (shouldTryAlt) {
     const altVal = (obj as any)[altKey];
     if (!isEmptyValue(altVal, treatEmptyArrayObjectAsValue)) return altVal;
   }
