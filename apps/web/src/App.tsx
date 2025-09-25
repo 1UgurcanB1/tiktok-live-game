@@ -4,15 +4,16 @@ import { router } from "./app/router";
 import PageTransition from "./components/PageTransition";
 import { events, ws } from "./services/ws";
 import { env } from "./env";
-import { tiktokConnect } from "./services/api";
-import SystemStatus from "./components/SystemStatus";
+import { getDBStatus, getTiktokStatus, tiktokConnect } from "./services/api";
+import { useStatusStore } from "./app/store/status.store";
+import type { DBStatusEvent, TikTokStatusEvent } from "@tiktok/types";
 
 // ถ้ามี Toast/Modal กลางระบบ ค่อยเสียบเพิ่มตรงนี้
-// import { Toaster } from "./components/Toast";
+import { Toaster } from "./components/Toast";
 
 export default function App() {
-  const [booted, setBooted] = useState(false);
   const abortedRef = useRef(false);
+  const { setDB, setTikTok } = useStatusStore();
 
   useEffect(() => {
     const ac = new AbortController();
@@ -23,7 +24,36 @@ export default function App() {
       ws.connect(env.VITE_WS_URL);
     }
 
-    // 2) Try TikTok connect; wait for it to settle before rendering
+    // 2) Fetch initial statuses in parallel (non-blocking for WS connect)
+    const fetchStatuses = async () => {
+      try {
+        const [dbRes, tkRes] = await Promise.allSettled([
+          getDBStatus({ signal: ac.signal }),
+          getTiktokStatus({ signal: ac.signal }),
+        ]);
+        if (dbRes.status === "fulfilled") {
+          setDB({ connected: dbRes.value.connected });
+        } else setDB({ connected: false });
+        if (tkRes.status === "fulfilled") {
+          setTikTok({
+            connected: tkRes.value.connected,
+            username: tkRes.value.username,
+            roomId: tkRes.value.roomId,
+          });
+        } else {
+          setTikTok({
+            connected: false,
+            username: undefined,
+            roomId: undefined,
+          });
+        }
+      } catch {
+        setDB({ connected: false });
+        setTikTok({ connected: false, username: undefined, roomId: undefined });
+      }
+    };
+
+    // 3) Try TikTok connect; mark boot completed afterwards
     const init = async () => {
       try {
         const username = env.VITE_TIKTOK_USERNAME?.trim();
@@ -38,47 +68,44 @@ export default function App() {
         }
       } catch (e) {
         console.warn("Unable to connect TikTok:", e);
-      } finally {
-        if (!abortedRef.current) setBooted(true);
       }
     };
 
-    // 2.1) Log all TikTok events for debugging
-    const offLog = events.on("tiktok.*", (ev: unknown) => {
-      try {
-        const obj = ev as { type?: string };
-        console.warn("[tiktok]", obj?.type ?? "event", ev);
-      } catch {
-        // no-op
-      }
-    });
-
+    fetchStatuses().catch(console.error);
     init().catch(console.error);
+
+    // Listen for status events & update store
+    const offDb = events.on("db.status", (ev: DBStatusEvent) => {
+      setDB({ connected: ev.connected });
+    });
+    const offTk = events.on("tiktok.status", (ev: TikTokStatusEvent) => {
+      setTikTok({
+        connected: ev.connected,
+        username: ev.username,
+        roomId: ev.roomId,
+      });
+    });
 
     return () => {
       abortedRef.current = true;
       ac.abort();
-      offLog();
+      offDb();
+      offTk();
     };
   }, []);
 
   return (
     <div className="min-h-dvh bg-neutral-900  text-white font-kanit">
-      {!booted ? (
-        <Fallback />
-      ) : (
-        <Suspense fallback={<Fallback />}>
-          <PageTransition>
-            <div className="min-h-dvh w-full grid place-items-center p-4">
-              <div className="relative grid w-[min(92vw,500px)] aspect-[9/16] bg-midnight-indigo text-arctic-sky rounded-3xl shadow-2xl overflow-hidden min-h-0 min-w-0 p-6">
-                <SystemStatus />
-                <RouterProvider router={router} />
-              </div>
+      <Suspense fallback={<Fallback />}>
+        <PageTransition>
+          <div className="min-h-dvh w-full grid place-items-center p-4">
+            <div className="relative grid w-[min(92vw,500px)] aspect-[9/16] bg-midnight-indigo text-arctic-sky rounded-3xl shadow-2xl overflow-hidden min-h-0 min-w-0 p-6">
+              <RouterProvider router={router} />
             </div>
-          </PageTransition>
-        </Suspense>
-      )}
-      {/* <Toaster /> */}
+          </div>
+        </PageTransition>
+      </Suspense>
+      <Toaster />
     </div>
   );
 }
