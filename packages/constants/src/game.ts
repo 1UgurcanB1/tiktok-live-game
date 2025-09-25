@@ -29,9 +29,9 @@ export const GAMES: GameConfig[] = [
       "ถ้าไม่มีใครตอบถูกภายในเวลา จะเฉลยแล้วข้ามไปคำถัดไป",
     ],
     nameEn: "Thai Word Guess",
+    categoryDescriptionEn: "Word Guessing",
     descriptionEn:
       "Host has a Thai word or hint. Viewers type the exact answer in chat. First correct wins the points immediately.",
-    categoryDescriptionEn: "Word Guessing",
     rulesEn: [
       "Each round has 1 Thai word or hint",
       "Type the exact answer in chat (no special symbols needed)",
@@ -56,9 +56,9 @@ export const GAMES: GameConfig[] = [
       "คนที่ตอบถูกก่อนสุดในรอบ รับคะแนนเต็ม",
     ],
     nameEn: "English Word Guess",
+    categoryDescriptionEn: "Word Guessing",
     descriptionEn:
       "Same as Thai word guess but with English vocabulary. Practice spelling and word recall.",
-    categoryDescriptionEn: "Word Guessing",
     rulesEn: [
       "Hint or category (if any) is given before the round",
       "Spelling must be correct (case-insensitive)",
@@ -83,9 +83,9 @@ export const GAMES: GameConfig[] = [
       "หากหมดเวลาไม่มีคนถูก จะเฉลยแล้วไปภาพถัดไป",
     ],
     nameEn: "Guess the Flag",
+    categoryDescriptionEn: "Picture Guessing",
     descriptionEn:
       "A flag is shown each round. Viewers type the country name (Thai or English). Fastest correct earns the points.",
-    categoryDescriptionEn: "Picture Guessing",
     rulesEn: [
       "See the flag and type the country name (Thai or English)",
       "Minor spelling deviations may not count (depends on validator)",
@@ -110,9 +110,9 @@ export const GAMES: GameConfig[] = [
       "ถ้า 50% เวลาผ่านไป อาจให้เพิ่ม 1 คำใบ้",
     ],
     nameEn: "Province Motto Guess",
+    categoryDescriptionEn: "Word Guessing",
     descriptionEn:
       "A province motto (or part of it) is shown. Guess the correct Thai province name.",
-    categoryDescriptionEn: "Word Guessing",
     rulesEn: [
       "One province motto or key phrase per round",
       "Type the province name in chat (abbreviations/spelling errors may not pass)",
@@ -138,9 +138,9 @@ export const GAMES: GameConfig[] = [
       "ทายถูกก่อนหมดรอบ รับคะแนนเต็ม ถ้าไม่สำเร็จไม่มีคะแนน",
     ],
     nameEn: "Thai Wordle",
+    categoryDescriptionEn: "Word Guessing",
     descriptionEn:
       "Guess the Thai word within limited attempts. Colors indicate correct letters and positions.",
-    categoryDescriptionEn: "Word Guessing",
     rulesEn: [
       "Guess one full word per attempt in chat",
       "Green = letter correct & correct position",
@@ -166,9 +166,9 @@ export const GAMES: GameConfig[] = [
       "ชนะเมื่อเดาคำถูกภายในจำนวนครั้งจำกัด",
     ],
     nameEn: "English Wordle",
+    categoryDescriptionEn: "Word Guessing",
     descriptionEn:
       "Standard Wordle gameplay with English words. Use color feedback to narrow possibilities.",
-    categoryDescriptionEn: "Word Guessing",
     rulesEn: [
       "Type words of the required length (e.g., 5 letters)",
       "Each attempt highlights letters (Green / Yellow / Gray)",
@@ -193,9 +193,9 @@ export const GAMES: GameConfig[] = [
       "ใครเดาคำเป้าถูกก่อน จบรอบ & ได้คะแนน",
     ],
     nameEn: "Thai Contexto",
+    categoryDescriptionEn: "Semantic Guessing",
     descriptionEn:
       "Guess the secret Thai word. Each guess returns a semantic closeness rank (lower is closer).",
-    categoryDescriptionEn: "Semantic Guessing",
     rulesEn: [
       "Type any Thai word to gauge semantic closeness",
       "System returns a rank or closeness score (lower = closer)",
@@ -221,9 +221,9 @@ export const GAMES: GameConfig[] = [
       "ทายผิดไม่โดนลบคะแนน แต่จะมีคูลดาวน์สั้นๆ (ถ้ากำหนด)",
     ],
     nameEn: "Thai Da Vinci Code",
+    categoryDescriptionEn: "Word Guessing",
     descriptionEn:
       "Letters of a Thai word are gradually revealed. Earlier correct guesses score higher.",
-    categoryDescriptionEn: "Word Guessing",
     rulesEn: [
       "Round starts with all letters hidden ( _ )",
       "Letters reveal gradually (time or events)",
@@ -249,9 +249,9 @@ export const GAMES: GameConfig[] = [
       "ความยาวจะเพิ่มขึ้นเมื่อผ่านรอบ เพื่อท้าทายมากขึ้น",
     ],
     nameEn: "Memory Challenge",
+    categoryDescriptionEn: "Memory",
     descriptionEn:
       "Memorize a short sequence (emoji / numbers / letters) then type it back. Later rounds get longer.",
-    categoryDescriptionEn: "Memory",
     rulesEn: [
       "Sequence displayed briefly each round then hidden",
       "Players retype the exact order (format rules TBD)",
