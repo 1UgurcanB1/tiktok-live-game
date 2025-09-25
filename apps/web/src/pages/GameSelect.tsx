@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import PageTransition from "../components/PageTransition";
 import TimedProgressBar from "../components/TimedProgressBar";
 import { DEFAULT_TIMERS, GAMES } from "@tiktok/constants";
+import { fairSampleByKey } from "@tiktok/utils";
 import type { GameConfig } from "@tiktok/types";
 import { events } from "../services/ws";
 import { useGameStore } from "../app/store/game.store";
@@ -217,40 +218,4 @@ export default function GameSelect() {
   );
 }
 
-// Local fair-sampling helpers to reduce repetition without cross-package deps
-function shuffle<T>(arr: readonly T[]): T[] {
-  const copy = arr.slice();
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-function sample<T>(arr: readonly T[], n: number): T[] {
-  return shuffle(arr).slice(0, Math.max(0, Math.min(n, arr.length)));
-}
-function fairSampleByKey<T, K extends string | number>(
-  items: readonly T[],
-  n: number,
-  key: (x: T) => K,
-  recent: readonly K[] = [],
-  window = Math.max(5, n * 2),
-): T[] {
-  if (n <= 0 || items.length === 0) return [];
-  const recentSlice = recent.slice(-window);
-  const recentSet = new Set<K>(recentSlice);
-  const fresh = items.filter((it) => !recentSet.has(key(it)));
-  if (fresh.length >= n) return sample(fresh, n);
-  const remainder = items.filter((it) => recentSet.has(key(it)));
-  const out = [...shuffle(fresh), ...shuffle(remainder)];
-  const seen = new Set<K>();
-  const picked: T[] = [];
-  for (const it of out) {
-    const k = key(it);
-    if (seen.has(k)) continue;
-    seen.add(k);
-    picked.push(it);
-    if (picked.length >= n) break;
-  }
-  return picked;
-}
+// Removed duplicated local sampling helpers; using fairSampleByKey from @tiktok/utils
