@@ -13,6 +13,17 @@ Environments: `development`, `staging`, `production` with separate `.env.*` file
 
 Default TikTok username example: `telechubbiies` (configurable).
 
+Core features:
+
+- Real / Simulated TikTok event streaming (chat / gift / follow / share / like)
+- In‑chat voting to select the next mini‑game (digits 0–5)
+- Fair random game sampling (avoids picking recently played games)
+- Weighted & fair selection utilities in `@tiktok/utils`
+- Unique per‑game rule sets (Thai language)
+- WebSocket broadcast with wildcard consumption on the client
+- Safe simulator mock file resolution (prevents path traversal escapes)
+- Zod‑validated environment config & graceful fallbacks
+
 ---
 
 ## Prerequisites
@@ -122,6 +133,14 @@ Content-Type: application/json
 
 On the web, a wildcard event channel `tiktok.*` is emitted for easy logging/debugging.
 
+Example (client side):
+
+```ts
+import { events } from "../services/ws";
+
+events.on("tiktok.*", (ev) => console.log("[ANY]", ev));
+```
+
 ---
 
 ## Simulator (Mock Files)
@@ -138,6 +157,13 @@ Rules
   - `TIKTOK_SIM_CHAT_FILE`
   - `TIKTOK_SIM_NAMES_FILE`
 - The resolver order is: env override → default repo file → built-in fallback
+
+Security & resilience:
+
+- Env overrides must be relative and remain inside the server root; invalid paths are skipped with a warning.
+- Each candidate file read is wrapped with contextual error logging (path + code + message) before falling back.
+- If all sources fail, a small built‑in default set of names/messages keeps the simulator producing traffic.
+- All event loops share a `running` flag and clear timers on `disconnect()`.
 
 ---
 
@@ -240,6 +266,7 @@ tiktok-live-game/
     utils/
       src/
         index.ts                - Shared utilities
+        random.ts               - Sampling (fair / weighted)
       package.json
       tsconfig.json
 
@@ -257,10 +284,60 @@ tiktok-live-game/
 
 ---
 
+## Game Definitions & Selection
+
+Game configs live in `packages/constants/src/game.ts` (typed by `GameConfig`). Each includes: stable `id`, `defaultRounds`, `defaultRoundDurationMs`, `category`, `description`, and `rules` (Thai).
+
+| ID           | Name                    | Rounds | Round ms | Category     |
+| ------------ | ----------------------- | ------ | -------- | ------------ |
+| guessWordTH  | ทายคำภาษาไทย            | 10     | 40000    | guessWord    |
+| guessWordEN  | ทายคำภาษาอังกฤษ         | 10     | 40000    | guessWord    |
+| guessFlag    | ทายภาพธงชาติ            | 10     | 35000    | guessPicture |
+| guessMottoTH | ทายคำขวัญจังหวัด        | 8      | 45000    | guessWord    |
+| wordleTH     | เกมเวิร์ดเดิลภาษาไทย    | 6      | 55000    | wordle       |
+| wordleEN     | เกมเวิร์ดเดิลภาษาอังกฤษ | 6      | 55000    | wordle       |
+| contextoTH   | เกมคอนเท็กโตภาษาไทย     | 8      | 50000    | contexto     |
+| davinciTH    | เกมดาวินชีภาษาไทย       | 10     | 45000    | davinci      |
+| memoryTest   | ทดสอบความจำ             | 10     | 35000    | memory       |
+
+### Voting Flow
+
+1. During selection phase: 5 games sampled + option `0 = สุ่มเกม`.
+2. Users vote by sending a single digit 0–5. Regex used: `VOTE_DIGIT_REGEX` (ignores digits embedded inside longer numbers).
+3. Only a unique leader becomes highlighted; ties do not shift highlight (stability).
+4. Timer end:
+   - Tie → random among tied.
+   - Winner 0 → random among 5 sampled.
+
+5. Chosen game id appended to recent history (localStorage) feeding fair sampling.
+
+### Fair Sampling
+
+`fairSampleByKey(items, n, key, recent, window)`:
+
+- Prefers items not in `recent` (window slice). If enough fresh items exist, pick only from them.
+- Otherwise fill remaining slots from recents (still unique per call).
+- Shuffling used to avoid deterministic ordering.
+
+### Weighted Sampling
+
+Utilities (`@tiktok/utils/random.ts`):
+
+- `weightedPickBy(items, weight)` → single weighted random pick.
+- `weightedSampleBy(items, n, weight, { replacement })` → top‑k sample w/out replacement via exponential race (Gumbel trick).
+
+Both apply weight normalization (finite, >= min threshold) to avoid division by zero and Infinity keys.
+
+---
+
 ## Troubleshooting
 
 - If type changes aren’t reflected, run:
   - `pnpm -w run build` to rebuild the graph (types → consumers)
+- No simulator events? Check console warnings for mock file resolution or ensure `TIKTOK_MODE=sim`.
+- Voting digits misparsed? See `VOTE_DIGIT_REGEX` in `GameSelect.tsx`.
+- Repeated games too often? Confirm `localStorage` not blocked; recent history drives fairness.
+- Need deterministic tests for weighted sampling? Seed `Math.random` (wrapper) or refactor utilities to accept RNG injection.
 
 ---
 
