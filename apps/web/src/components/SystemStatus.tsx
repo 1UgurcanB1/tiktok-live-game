@@ -1,64 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
-import { useBroadcast } from "../hooks/useBroadcast";
-import type { DBStatusEvent, TikTokStatusEvent } from "@tiktok/types";
-import { getDBStatus, getTiktokStatus } from "../services/api";
+import { useStatusStore } from "../app/store/status.store";
 
+// Passive system status pill; all realtime logic lives in App.tsx via the status store
 export default function MinimalStatus() {
-  const [dbOk, setDbOk] = useState(false);
-  const [tkOk, setTkOk] = useState(false);
-  const [tkUsername, setTkUsername] = useState("Tiktok");
-
-  // ครั้งแรกดึงจาก API
-  useEffect(() => {
-    const ac = new AbortController();
-    getDBStatus({ signal: ac.signal })
-      .then((h) => {
-        setDbOk(!!h.connected);
-      })
-      .catch(() => {
-        setDbOk(false);
-      });
-    return () => ac.abort();
-  }, []);
-
-  useEffect(() => {
-    const ac = new AbortController();
-    getTiktokStatus({ signal: ac.signal })
-      .then((h) => {
-        if (h.roomId) {
-          setTkOk(!!h.connected);
-          setTkUsername(h.username ?? "Tiktok");
-        } else {
-          setTkOk(false);
-          setTkUsername("Tiktok");
-        }
-      })
-      .catch(() => {
-        setTkOk(false);
-        setTkUsername("Tiktok");
-      });
-    return () => ac.abort();
-  }, []);
-
-  // อัปเดตแบบ realtime จาก WS
-  const onDBStatus = useCallback((e: DBStatusEvent) => {
-    setDbOk(!!e.connected);
-  }, []);
-  useBroadcast<DBStatusEvent>("db.status", onDBStatus);
-
-  const onTiktokStatus = useCallback((e: TikTokStatusEvent) => {
-    if (e.roomId) {
-      setTkOk(!!e.connected);
-      setTkUsername(e.username ?? "Tiktok");
-    } else {
-      setTkOk(false);
-      setTkUsername("Tiktok");
-    }
-  }, []);
-  useBroadcast<TikTokStatusEvent>("tiktok.status", onTiktokStatus);
-
+  const dbOk = useStatusStore((s) => s.dbOk);
+  const tkOk = useStatusStore((s) => s.tkOk);
+  const tkUsername = useStatusStore((s) => s.tkUsername);
   return (
-    <div className="absolute top-3 right-3 z-50 text-xs bg-white/80 text-midnight-indigo backdrop-blur rounded-full px-2 py-1.5 shadow-sm">
+    <div className="z-50 text-xs bg-white/80 text-midnight-indigo backdrop-blur rounded-full px-2 py-1.5 shadow-sm">
       <span className="inline-flex items-center gap-1 mr-2">
         <Dot ok={dbOk} /> DB
       </span>
