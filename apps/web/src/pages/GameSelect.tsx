@@ -17,7 +17,6 @@ type GameItem = {
   category: string; // ประเภทเกม
   votes: number;
   highlight?: boolean; // true = วงกลมลำดับสีส้ม
-  onClick?: (order: number) => void;
 };
 
 export default function GameSelect() {
@@ -117,17 +116,6 @@ export default function GameSelect() {
     return () => off();
   }, []);
 
-  // Optional: allow tapping a pill to simulate a vote (useful for manual testing)
-  const handleClick = (order: GameItem["order"]) => {
-    if (typeof order === "number" && order >= 0 && order <= 5) {
-      setVotes((vs) => {
-        const next = vs.slice();
-        next[order] += 1;
-        return next;
-      });
-    }
-  };
-
   // When timer completes: choose winner and go to rules
   const onComplete = () => {
     // find all ids with max votes (include 0 if tied)
@@ -189,11 +177,7 @@ export default function GameSelect() {
           {/* Body */}
           <div className="p-5 space-y-5">
             {games.map((g) => (
-              <button
-                key={g.order}
-                onClick={() => (g.onClick ?? handleClick)(g.order)}
-                className="w-full text-left group"
-              >
+              <button key={g.order} className="w-full text-left group">
                 {/* meta */}
                 <div className="px-2 text-lg text-[#a7d3ff]/90 flex items-center gap-4 mb-1">
                   <span>

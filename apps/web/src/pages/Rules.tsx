@@ -4,66 +4,107 @@ import { DEFAULT_TIMERS } from "@tiktok/constants";
 import { useTranslation } from "react-i18next";
 import { useGameStore } from "../app/store/game.store";
 import PageTransition from "../components/PageTransition";
+import TimedProgressBar from "../components/TimedProgressBar";
+import SystemStatus from "../components/SystemStatus";
+import { localized } from "../lib/localize";
 
 export default function Rules() {
-  const nav = useNavigate();
-  const { selected } = useGameStore();
-  const { i18n, t } = useTranslation(["rules"]);
-  const ms = useMemo(
-    () => selected?.timersOverride?.rulesMs ?? DEFAULT_TIMERS.rulesMs,
-    [selected],
-  );
+  const navigate = useNavigate();
+  const selected = useGameStore((s) => s.selected);
+  const { t, i18n } = useTranslation(["rules", "common"]);
 
-  const localName = useMemo(() => {
-    if (!selected) return "";
-    if (i18n.language.startsWith("en") && selected.nameEn) {
-      return selected.nameEn;
-    }
-    return selected.name; // Thai default
-  }, [i18n.language, selected]);
-
+  // Fallback: if user refreshed and lost selection, send back to select page
   useEffect(() => {
-    if (!selected) return;
-    const id = window.setTimeout(() => nav("/play"), ms);
-    return () => clearTimeout(id);
-  }, [ms, nav, selected]);
+    if (!selected) {
+      const timeout = setTimeout(() => navigate("/select"), 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [selected, navigate]);
 
-  if (!selected) {
-    return (
-      <main className="p-6">
-        <p>
-          {t("notSelected")} →{" "}
-          <button className="underline" onClick={() => nav("/select")}>
-            {t("backToSelect")}
-          </button>
-        </p>
-      </main>
-    );
-  }
+  const localizedRules: string[] = useMemo(() => {
+    if (!selected) return [];
+    return localized(selected, "rules");
+  }, [selected, i18n.language]);
+
+  const gameImage = selected?.gameImage;
+  const gameDescription = useMemo(() => {
+    if (!selected) return "";
+    return localized(selected, "description");
+  }, [selected, i18n.language]);
+
+  const onComplete = () => {
+    navigate("/play");
+  };
+
+  const totalMs = selected?.timersOverride?.rulesMs || DEFAULT_TIMERS.rulesMs;
 
   return (
-    <PageTransition>
-      <main className="p-6 max-w-2xl mx-auto space-y-4">
-        <h2 className="text-2xl font-bold">
-          {t("title", { game: localName })}
-        </h2>
-        <ol className="list-decimal pl-6 space-y-2 opacity-80">
-          <li>{t("list.totalRounds", { count: selected.defaultRounds })}</li>
-          <li>{t("list.chatFast")}</li>
-          <li>{t("list.summary")}</li>
-        </ol>
-        <div className="flex gap-3">
-          <button
-            className="px-4 py-2 rounded-xl shadow"
-            onClick={() => nav("/play")}
-          >
-            {t("startNow")}
-          </button>
-          <p className="opacity-60 self-center">
-            {t("autoNext", { seconds: Math.ceil(ms / 1000) })}
-          </p>
+    <div className="h-full w-full">
+      <div className="w-full flex items-center gap-6">
+        <TimedProgressBar
+          duration={selected ? totalMs : undefined}
+          onComplete={selected ? onComplete : undefined}
+          className="flex-1"
+          trackClassName="bg-white/20"
+          barClassName="bg-tangerine-pop"
+        />
+        <SystemStatus />
+      </div>
+      <PageTransition className="gap-5 py-6">
+        <div className="flex flex-col">
+          {/* Header */}
+          <h2 className="text-3xl text-white text-center font-extrabold">
+            {t("title", { ns: "rules" })}
+          </h2>
+          {selected && (
+            <h4 className="text-xl text-arctic-sky text-center">
+              {localized(selected, "name")}
+            </h4>
+          )}
+          <hr className="mt-6" />
+          {selected && (
+            <>
+              {/* Illustration */}
+              {gameImage && (
+                <div className="rounded-2xl overflow-hidden bg-white/5 mt-6">
+                  <div className="aspect-[6/4] w-full">
+                    <img
+                      src={gameImage}
+                      alt={t("title", { ns: "rules" })}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              {gameDescription && (
+                <p className="text-[#cfe6ff] text-lg leading-relaxed pt-6">
+                  {gameDescription}
+                </p>
+              )}
+
+              {/* Rules List */}
+              <ul className="list-decimal list-inside text-[#e3f2ff] text-lg mt-4 space-y-2">
+                {localizedRules.map((r, i) => (
+                  <li key={i}>{r}</li>
+                ))}
+              </ul>
+
+              {/* Meta Info */}
+              <div className="mt-6 text-white/60 flex flex-wrap gap-x-4 gap-y-1">
+                <span className="w-full text-right">
+                  {t("list.totalRounds", {
+                    count: selected.defaultRounds,
+                    ns: "rules",
+                  })}
+                </span>
+              </div>
+            </>
+          )}
         </div>
-      </main>
-    </PageTransition>
+      </PageTransition>
+    </div>
   );
 }

@@ -1,10 +1,4 @@
 {
-  "title": "Rules — {{game}}",
-  "list.totalRounds": "This game has {{count}} rounds",
-  "list.chatFast": "Answer in chat as fast as you can",
-  "list.summary": "Scores are summarized after each round",
-  "startNow": "Start now",
-  "autoNext": "Auto-advancing in {{seconds}}s",
-  "notSelected": "No game selected",
-  "backToSelect": "Back to select"
+  "title": "Rules",
+  "list.totalRounds": "This game has {{count}} rounds"
 }

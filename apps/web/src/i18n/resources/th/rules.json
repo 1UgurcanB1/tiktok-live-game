@@ -1,10 +1,4 @@
 {
-  "title": "กฏการเล่น — {{game}}",
-  "list.totalRounds": "เกมนี้มี {{count}} รอบ",
-  "list.chatFast": "ตอบในแชทให้เร็วที่สุด",
-  "list.summary": "ระบบจะสรุปคะแนนหลังจบแต่ละรอบ",
-  "startNow": "เริ่มเลย",
-  "autoNext": "จะไปต่ออัตโนมัติใน {{seconds}}s",
-  "notSelected": "ยังไม่ได้เลือกเกม",
-  "backToSelect": "กลับไปเลือก"
+  "title": "กฏการเล่น",
+  "list.totalRounds": "เกมนี้มี {{count}} รอบ"
 }
