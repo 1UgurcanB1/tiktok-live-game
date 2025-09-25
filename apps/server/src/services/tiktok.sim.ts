@@ -10,6 +10,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Memoization cache to avoid repeated filesystem traversal for package.json lookup
+const pkgJsonDirCache = new Map<string, string>();
+
 type EventMap = {
   chat: ChatEventData;
   gift: GiftEventData;
@@ -52,11 +55,28 @@ export class SimulatedTikTokConnection {
             : path.resolve(process.cwd(), envRoot)
           : await findNearestPackageJsonDir(__dirname);
       const mockDir = path.join(serverRoot, "mock");
-      const fromServerRoot = (p?: string) =>
-        p ? (path.isAbsolute(p) ? p : path.resolve(serverRoot, p)) : undefined;
+      // Only allow relative env-provided paths that resolve under serverRoot to prevent traversal
+      const fromEnvUnderServerRoot = (p: string | undefined, varName: string) => {
+        if (!p) return undefined;
+        if (path.isAbsolute(p)) {
+          console.warn("[tiktok.sim] Ignoring absolute env path for", varName);
+          return undefined;
+        }
+        const resolved = path.resolve(serverRoot, p);
+        const rel = path.relative(serverRoot, resolved);
+        const inside = rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+        if (!inside) {
+          console.warn(
+            "[tiktok.sim] Ignoring env path outside server root",
+            { var: varName, requested: p, resolved, serverRoot },
+          );
+          return undefined;
+        }
+        return resolved;
+      };
 
       const chatCandidates = [
-        fromServerRoot(process.env.TIKTOK_SIM_CHAT_FILE),
+        fromEnvUnderServerRoot(process.env.TIKTOK_SIM_CHAT_FILE, "TIKTOK_SIM_CHAT_FILE"),
         path.join(mockDir, "tiktok_chat_messages.txt"),
       ].filter(Boolean) as string[];
       this.chatMessages = await loadFirstExistingAsync(chatCandidates, [
@@ -71,7 +91,7 @@ export class SimulatedTikTokConnection {
       ]);
 
       const nameCandidates = [
-        fromServerRoot(process.env.TIKTOK_SIM_NAMES_FILE),
+        fromEnvUnderServerRoot(process.env.TIKTOK_SIM_NAMES_FILE, "TIKTOK_SIM_NAMES_FILE"),
         path.join(mockDir, "tiktok_names.txt"),
       ].filter(Boolean) as string[];
       this.names = await loadFirstExistingAsync(nameCandidates, [
@@ -283,12 +303,18 @@ async function findNearestPackageJsonDir(
   startDir: string,
   maxDepth = 6,
 ): Promise<string> {
+  const key = `${path.resolve(startDir)}|${maxDepth}`;
+  const cached = pkgJsonDirCache.get(key);
+  if (cached) return cached;
   let dir = startDir;
   const root = path.parse(dir).root;
   for (let depth = 0; depth <= maxDepth; depth++) {
     try {
       const st = await fs.promises.stat(path.join(dir, "package.json"));
-      if (st.isFile()) return dir;
+      if (st.isFile()) {
+        pkgJsonDirCache.set(key, dir);
+        return dir;
+      }
     } catch {
       // not found here, continue upwards
     }
@@ -300,5 +326,6 @@ async function findNearestPackageJsonDir(
     "[tiktok.sim] package.json not found within maxDepth; falling back to startDir",
     { startDir, maxDepth },
   );
+  pkgJsonDirCache.set(key, startDir);
   return startDir;
 }
