@@ -1,46 +1,164 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PageTransition from "../components/PageTransition";
 import TimedProgressBar from "../components/TimedProgressBar";
-import { DEFAULT_TIMERS } from "@tiktok/constants";
+import { DEFAULT_TIMERS, GAMES } from "@tiktok/constants";
+import type { GameConfig } from "@tiktok/types";
+import { events } from "../services/ws";
+import { useGameStore } from "../app/store/game.store";
 
 type GameItem = {
-  id: string | number;
+  order: number; // 0..5 แสดงตัวเลขนี้แทน id
   title: string;
   category: string; // ประเภทเกม
   votes: number;
   highlight?: boolean; // true = วงกลมลำดับสีส้ม
-  onClick?: (id: string | number) => void;
+  onClick?: (order: number) => void;
 };
 
 export default function GameSelect() {
-  // mock data – ปรับ/แทนที่ด้วย API ของคุณได้
-  const games: GameItem[] = useMemo(
-    () => [
-      { id: 0, title: "สุ่มเกม", category: "สุ่ม", votes: 15, highlight: true },
-      {
-        id: 1,
-        title: "เกมทายคำภาษาไทย",
-        category: "ทายคำ",
-        votes: 25,
-      },
-      { id: 2, title: "เกมเวิร์ดเดิลภาษาไทย", category: "ทายคำ", votes: 12 },
-      { id: 3, title: "เกมคอนเท็กซ์โตภาษาไทย", category: "ทายคำ", votes: 8 },
-      { id: 4, title: "เกมทายธงชาติต่างประเทศ", category: "ทายภาพ", votes: 4 },
-      { id: 5, title: "เกมทายคำจังหวัด", category: "ทายคำ", votes: 15 },
-    ],
-    [],
+  const navigate = useNavigate();
+  const setGame = useGameStore((s) => s.setGame);
+
+  // Keep lightweight recent history in localStorage to reduce repeats across sessions
+  const [recent, setRecent] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem("game_recent_ids");
+      const arr = raw ? (JSON.parse(raw) as string[]) : [];
+      return Array.isArray(arr) ? arr.slice(-10) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Pick 5 fair-random games using recent history
+  const selected = useMemo(
+    () => fairSampleByKey<GameConfig, string>(GAMES, 5, (g) => g.id, recent, 8),
+    [recent],
   );
 
-  const handleClick = (id: GameItem["id"]) => {
-    alert(`เลือกเกม id=${id}`);
+  // Votes for options 0..5 (index 0 is "สุ่มเกม")
+  const [votes, setVotes] = useState<number[]>([0, 0, 0, 0, 0, 0]);
+  // Current highlighted leader (persist across ties); default to 0
+  const [leaderOrder, setLeaderOrder] = useState<number>(0);
+
+  // Build items for rendering with dynamic highlight based on current votes
+  const maxVotes = Math.max(...votes);
+  const games: GameItem[] = useMemo(() => {
+    const arr: GameItem[] = [];
+    // id 0: random option
+    arr.push({
+      order: 0,
+      title: "สุ่มเกม",
+      category: "สุ่ม",
+      votes: votes[0],
+      // มีได้แค่ตัวเดียว: ใช้ leaderOrder จาก state (ไม่เปลี่ยนเมื่อเสมอ)
+      highlight: leaderOrder === 0,
+    });
+    // ids 1..5 from selected games
+    for (let i = 0; i < selected.length; i++) {
+      const g = selected[i];
+      const idx = i + 1;
+      arr.push({
+        order: idx,
+        title: g.name,
+        category: g.categoryDescription ?? "",
+        votes: votes[idx],
+        highlight: leaderOrder === idx,
+      });
+    }
+    return arr;
+  }, [leaderOrder, selected, votes, maxVotes]);
+
+  // Update leaderOrder only when there is a unique leader; ignore ties
+  useEffect(() => {
+    const maxV = Math.max(...votes);
+    const contenders = votes
+      .map((v, i) => ({ v, i }))
+      .filter(({ v }) => v === maxV)
+      .map(({ i }) => i);
+    if (contenders.length === 1) {
+      const nextLeader = contenders[0] ?? 0;
+      if (nextLeader !== leaderOrder) setLeaderOrder(nextLeader);
+    }
+    // else: do nothing on tie
+  }, [votes, leaderOrder]);
+
+  // Listen to TikTok chat votes (0-5)
+  useEffect(() => {
+    const off = events.on("tiktok.chat", (ev: unknown) => {
+      try {
+        const msg = ev as { data?: { comment?: string } };
+        const text = msg?.data?.comment ?? "";
+        const m = /(?:^|\D)([0-5])(?!\d)/.exec(text);
+        if (!m) return;
+        const n = Number(m[1]);
+        if (n >= 0 && n <= 5) {
+          setVotes((vs) => {
+            const next = vs.slice();
+            next[n] += 1;
+            return next;
+          });
+        }
+      } catch {
+        // ignore malformed
+      }
+    });
+    return () => off();
+  }, []);
+
+  // Optional: allow tapping a pill to simulate a vote (useful for manual testing)
+  const handleClick = (order: GameItem["order"]) => {
+    if (typeof order === "number" && order >= 0 && order <= 5) {
+      setVotes((vs) => {
+        const next = vs.slice();
+        next[order] += 1;
+        return next;
+      });
+    }
+  };
+
+  // When timer completes: choose winner and go to rules
+  const onComplete = () => {
+    // find all ids with max votes (include 0 if tied)
+    const maxV = Math.max(...votes);
+    const contenders: number[] = votes
+      .map((v, i) => ({ v, i }))
+      .filter(({ v }) => v === maxV)
+      .map(({ i }) => i);
+
+    const winnerId = contenders.length
+      ? contenders[Math.floor(Math.random() * contenders.length)]
+      : 0; // if no votes at all, treat as 0 (random)
+
+    let chosen = null as null | (typeof selected)[number];
+    if (winnerId === 0) {
+      // random among 1..5
+      chosen = selected[Math.floor(Math.random() * selected.length)] ?? null;
+    } else {
+      const idx = winnerId - 1; // map 1..5 to 0..4
+      chosen = selected[idx] ?? null;
+    }
+
+    if (chosen) {
+      setGame(chosen);
+      try {
+        const nextRecent = [...recent, chosen.id].slice(-12);
+        setRecent(nextRecent);
+        localStorage.setItem("game_recent_ids", JSON.stringify(nextRecent));
+      } catch {
+        // ignore storage errors
+      }
+    }
+    navigate("/rules");
   };
 
   return (
     <PageTransition className="gap-5">
       <TimedProgressBar
         duration={DEFAULT_TIMERS.selectGameMs}
-        onComplete={() => console.warn("done!")}
-        className="w-85"
+        onComplete={onComplete}
+        className="w-75"
         trackClassName="bg-white/20"
         barClassName="bg-tangerine-pop"
       />
@@ -58,8 +176,8 @@ export default function GameSelect() {
         <div className="p-5 space-y-5">
           {games.map((g) => (
             <button
-              key={g.id}
-              onClick={() => (g.onClick ?? handleClick)(g.id)}
+              key={g.order}
+              onClick={() => (g.onClick ?? handleClick)(g.order)}
               className="w-full text-left group"
             >
               {/* meta */}
@@ -83,7 +201,7 @@ export default function GameSelect() {
                     g.highlight ? "bg-[#ffa654]" : "bg-[#b9dcff]",
                   ].join(" ")}
                 >
-                  {g.id}
+                  {g.order}
                 </div>
 
                 {/* title */}
@@ -97,4 +215,42 @@ export default function GameSelect() {
       </div>
     </PageTransition>
   );
+}
+
+// Local fair-sampling helpers to reduce repetition without cross-package deps
+function shuffle<T>(arr: readonly T[]): T[] {
+  const copy = arr.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+function sample<T>(arr: readonly T[], n: number): T[] {
+  return shuffle(arr).slice(0, Math.max(0, Math.min(n, arr.length)));
+}
+function fairSampleByKey<T, K extends string | number>(
+  items: readonly T[],
+  n: number,
+  key: (x: T) => K,
+  recent: readonly K[] = [],
+  window = Math.max(5, n * 2),
+): T[] {
+  if (n <= 0 || items.length === 0) return [];
+  const recentSlice = recent.slice(-window);
+  const recentSet = new Set<K>(recentSlice);
+  const fresh = items.filter((it) => !recentSet.has(key(it)));
+  if (fresh.length >= n) return sample(fresh, n);
+  const remainder = items.filter((it) => recentSet.has(key(it)));
+  const out = [...shuffle(fresh), ...shuffle(remainder)];
+  const seen = new Set<K>();
+  const picked: T[] = [];
+  for (const it of out) {
+    const k = key(it);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    picked.push(it);
+    if (picked.length >= n) break;
+  }
+  return picked;
 }
