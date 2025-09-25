@@ -87,11 +87,16 @@ export default function GameSelect() {
 
   // Listen to TikTok chat votes (0-5)
   useEffect(() => {
+    // Matches a single digit 0-5 that is not part of a longer number:
+    // (?:^|\D)  => start of string or a non-digit boundary before the digit
+    // ([0-5])    => capture the vote digit (allowed range)
+    // (?!\d)    => ensure it's not immediately followed by another digit
+    const VOTE_DIGIT_REGEX = /(?:^|\D)([0-5])(?!\d)/;
     const off = events.on("tiktok.chat", (ev: unknown) => {
       try {
         const msg = ev as { data?: { comment?: string } };
         const text = msg?.data?.comment ?? "";
-        const m = /(?:^|\D)([0-5])(?!\d)/.exec(text);
+        const m = VOTE_DIGIT_REGEX.exec(text);
         if (!m) return;
         const n = Number(m[1]);
         if (n >= 0 && n <= 5) {
