@@ -292,7 +292,7 @@ async function findNearestPackageJsonDir(
     if (parent === dir || dir === root) break;
     dir = parent;
   }
-  console.warn(
+  console.log(
     "[tiktok.sim] package.json not found within maxDepth; falling back to startDir",
     { startDir, maxDepth },
   );
