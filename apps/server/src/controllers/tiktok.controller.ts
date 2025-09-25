@@ -4,7 +4,7 @@ import { tiktok } from "../services/tiktok.service.js";
 import { broadcast } from "../lib/ws.js";
 import type { TikTokStatusEvent } from "@tiktok/types";
 import { toISO } from "@tiktok/utils";
-import { RequestHandler } from "express";
+import type { RequestHandler } from "express";
 import { env } from "../env.js";
 
 const ConnectSchema = z.object({

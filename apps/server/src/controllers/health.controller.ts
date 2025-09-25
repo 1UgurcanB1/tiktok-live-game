@@ -1,7 +1,7 @@
 import { healthMongo } from "../db.js";
 import type { Request, Response } from "express";
 import { broadcast } from "../lib/ws.js";
-import { DBStatusEvent } from "@tiktok/types";
+import type { DBStatusEvent } from "@tiktok/types";
 import { toISO } from "@tiktok/utils";
 import { env } from "../env.js";
 

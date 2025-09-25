@@ -1,13 +1,14 @@
-import {
+import type {
   ChatEventData,
-  GiftEventData,
   FollowEventData,
-  ShareEventData,
+  GiftEventData,
   LikeEventData,
+  ShareEventData,
 } from "@tiktok/types";
 import { randomId, sleep } from "@tiktok/utils";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 type EventMap = {
   chat: ChatEventData;
@@ -37,28 +38,33 @@ export class SimulatedTikTokConnection {
   constructor(username: string) {
     this.username = username;
     this.roomId = Math.floor(Math.random() * 10_000_000).toString();
-    const mockDir = path.resolve(process.cwd(), "apps/server/mock");
+    // Resolve paths relative to this module so it works regardless of cwd
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const serverRoot = path.resolve(__dirname, "..", "..");
+    const mockDir = path.join(serverRoot, "mock");
+
+    const fromServerRoot = (p?: string) =>
+      p ? (path.isAbsolute(p) ? p : path.resolve(serverRoot, p)) : undefined;
+
     const candidates = [
-      process.env.TIKTOK_SIM_CHAT_FILE,
+      fromServerRoot(process.env.TIKTOK_SIM_CHAT_FILE),
       path.join(mockDir, "tiktok_chat_messages.txt"),
     ].filter(Boolean) as string[];
-    this.chatMessages = loadFirstExisting(
-      candidates,
-      [
-        "สวัสดีครับ",
-        "สู้ๆ นะ",
-        "แจกของหน่อย",
-        "เกมอะไรครับ",
-        "5555",
-        "Nice!",
-        "Let's go!",
-        "สุดยอด",
-      ],
-    );
+    this.chatMessages = loadFirstExisting(candidates, [
+      "สวัสดีครับ",
+      "สู้ๆ นะ",
+      "แจกของหน่อย",
+      "เกมอะไรครับ",
+      "5555",
+      "Nice!",
+      "Let's go!",
+      "สุดยอด",
+    ]);
     this.names = loadFirstExisting(
       [
-        process.env.TIKTOK_SIM_NAMES_FILE,
-        path.resolve(process.cwd(), "apps/server/mock/tiktok_names.txt"),
+        fromServerRoot(process.env.TIKTOK_SIM_NAMES_FILE),
+        path.join(mockDir, "tiktok_names.txt"),
       ].filter(Boolean) as string[],
       [
         "Alice",
@@ -102,13 +108,13 @@ export class SimulatedTikTokConnection {
   on<E extends keyof EventMap>(event: E, cb: Listener<E>) {
     if (!this.listeners[event])
       this.listeners[event] = [] as Array<(ev: unknown) => void>;
-    const arr = this.listeners[event]!;
+    const arr = (this.listeners[event] ??= [] as Array<(ev: unknown) => void>);
     arr.push(cb as unknown as (ev: unknown) => void);
   }
 
   private emit<E extends keyof EventMap>(event: E, data: EventMap[E]) {
-    for (const cb of this.listeners[event] || [])
-      (cb as (ev: EventMap[E]) => void)(data);
+    const arr = this.listeners[event] || [];
+    for (const cb of arr) (cb as (ev: EventMap[E]) => void)(data);
   }
 
   private spawnChatLoop() {

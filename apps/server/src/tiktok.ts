@@ -1,4 +1,9 @@
-import { ChatEventData, GiftEventData, SocialEventData, LikeEventData } from "@tiktok/types";
+import type {
+  ChatEventData,
+  GiftEventData,
+  LikeEventData,
+  SocialEventData,
+} from "@tiktok/types";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
