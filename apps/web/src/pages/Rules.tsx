@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DEFAULT_TIMERS } from "@tiktok/constants";
 import { useTranslation } from "react-i18next";
@@ -20,11 +20,6 @@ export default function Rules() {
       return () => clearTimeout(timeout);
     }
   }, [selected, navigate]);
-
-  const localeGameName = useMemo(() => {
-    if (!selected) return t("notSelected");
-    return localized(selected, "name");
-  }, [selected, i18n.language, t]);
 
   const localizedRules: string[] = useMemo(() => {
     if (!selected) return [];
@@ -59,16 +54,11 @@ export default function Rules() {
         <div className="flex flex-col">
           {/* Header */}
           <h2 className="text-3xl text-white text-center font-extrabold">
-            {t("title", { game: localeGameName })}
+            {t("title", { ns: "rules" })}
           </h2>
-          {!selected && (
-            <p className="text-center text-red-300 mt-2">
-              {t("notSelected")} – {t("backToSelect", { ns: "rules" })}
-            </p>
-          )}
           {selected && (
             <h4 className="text-xl text-arctic-sky text-center">
-              {localeGameName}
+              {t("title", { ns: "rules" })}
             </h4>
           )}
           <hr className="mt-6" />
@@ -80,7 +70,7 @@ export default function Rules() {
                   <div className="aspect-[6/4] w-full">
                     <img
                       src={gameImage}
-                      alt={localeGameName}
+                      alt={t("title", { ns: "rules" })}
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
