@@ -24,6 +24,8 @@ export type ProgressBarProps = {
   autoplay?: boolean; // default true when duration provided
   paused?: boolean; // external pause control (optional)
   onComplete?: () => void;
+  /** Delay (ms) before calling onComplete AFTER progress reaches 100%. Default 5000 (5s). Use 0 for immediate. */
+  completeDelayMs?: number;
   className?: string; // wrapper classes
   trackClassName?: string; // background track
   barClassName?: string; // foreground bar
@@ -43,6 +45,7 @@ const TimedProgressBar = forwardRef<ProgressBarHandle, ProgressBarProps>(
       autoplay = true,
       paused,
       onComplete,
+      completeDelayMs = 3000,
       className = "w-full",
       trackClassName = "bg-white/20",
       barClassName = "bg-[#ffa654]",
@@ -57,6 +60,7 @@ const TimedProgressBar = forwardRef<ProgressBarHandle, ProgressBarProps>(
     const startTimeRef = useRef<number | null>(null);
     const carriedRef = useRef<number>(0); // ms accumulated when paused/resumed
     const runningRef = useRef<boolean>(false);
+    const completeTimeoutRef = useRef<number | null>(null);
 
     const tick = useCallback(
       (t: number) => {
@@ -70,12 +74,24 @@ const TimedProgressBar = forwardRef<ProgressBarHandle, ProgressBarProps>(
           startTimeRef.current = null;
           carriedRef.current = 0;
           if (rafRef.current) cancelAnimationFrame(rafRef.current);
-          onComplete?.();
+          if (completeTimeoutRef.current) {
+            clearTimeout(completeTimeoutRef.current);
+            completeTimeoutRef.current = null;
+          }
+          if (onComplete) {
+            if (completeDelayMs <= 0) onComplete();
+            else {
+              completeTimeoutRef.current = window.setTimeout(() => {
+                onComplete();
+                completeTimeoutRef.current = null;
+              }, completeDelayMs);
+            }
+          }
           return;
         }
         rafRef.current = requestAnimationFrame(tick);
       },
-      [duration, onComplete],
+      [duration, onComplete, completeDelayMs],
     );
 
     const start = useCallback(() => {
@@ -114,6 +130,10 @@ const TimedProgressBar = forwardRef<ProgressBarHandle, ProgressBarProps>(
       rafRef.current = null;
       startTimeRef.current = null;
       carriedRef.current = 0;
+      if (completeTimeoutRef.current) {
+        clearTimeout(completeTimeoutRef.current);
+        completeTimeoutRef.current = null;
+      }
       setValue(0);
     }, []);
 
@@ -137,6 +157,10 @@ const TimedProgressBar = forwardRef<ProgressBarHandle, ProgressBarProps>(
       if (autoplay) start();
       return () => {
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        if (completeTimeoutRef.current) {
+          clearTimeout(completeTimeoutRef.current);
+          completeTimeoutRef.current = null;
+        }
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omit 'start' to avoid restarting timer if function identity changes
     }, [duration, autoplay]);
