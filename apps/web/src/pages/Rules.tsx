@@ -58,7 +58,7 @@ export default function Rules() {
           </h2>
           {selected && (
             <h4 className="text-xl text-arctic-sky text-center">
-              {t("title", { ns: "rules" })}
+              {localized(selected, "name")}
             </h4>
           )}
           <hr className="mt-6" />
