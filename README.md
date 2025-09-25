@@ -1,46 +1,17 @@
 # tiktok-live-game
 
-# Development
-pnpm docker:dev
+## Overview
 
-# Staging
-pnpm docker:staging
+Monorepo (Turborepo) for a TikTok Live game stack.
 
-# Production (local)
-pnpm docker:prod
+- UI: React + Vite + Tailwind CSS (TypeScript)
+- Server: Node.js + Express + WebSocket (TypeScript)
+- Data: MongoDB (Mongoose)
+- TikTok: tiktok-live-connector (real mode) + in-house simulator (sim mode)
 
-# ปิดและลบ volumes
-Remove-Item -Recurse -Force .docker\dev -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force .docker\staging -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force .docker\prod -ErrorAction SilentlyContinue
-pnpm docker:down
+Environments: `development`, `staging`, `production` with separate `.env.*` files for server and web.
 
-# และอย่าลืม build shared types ครั้งแรก/เวลาแก้ไฟล์ type:
-pnpm --filter "@tiktok/types" build
-
-ผูกทั้งหมดด้วย Turborepo
-# เริ่มฐานข้อมูล dev ก่อน
-pnpm docker:dev
-
-# Build shared types
-pnpm --filter @tiktok/types build
-
-# รันพร้อมกันทั้ง server + web
-pnpm dev
-
-
-
-
-Monorepo (Turborepo) for a simple TikTok Live game stack:
-
-- **UI**: React + Vite + Tailwind CSS (TypeScript)
-- **Server**: Node.js + Express + WebSocket (TypeScript)
-- **DB**: PostgreSQL 17 via Docker
-- **Chat**: [tiktok-live-connector](https://www.npmjs.com/package/tiktok-live-connector)
-
-Environments: `development`, `staging`, `production` with separate `.env.*` files for both **server** and **web**.
-
-> Default TikTok username is set to `telechubbiies`.
+Default TikTok username example: `telechubbiies` (configurable).
 
 ---
 
@@ -48,160 +19,262 @@ Environments: `development`, `staging`, `production` with separate `.env.*` file
 
 - Node.js 18+
 - pnpm 9+
-- Docker & Docker Compose
+- Docker (optional for MongoDB via compose)
 
 ---
 
 ## Quick Start (Development)
 
-```bash
-# 1) Start Postgres 17 (creates 3 DBs: tiktok_live, tiktok_live_stag, tiktok_live_dev)
-docker compose up -d
-
-# 2) Install deps
-
+```powershell
+# 1) Install dependencies
 pnpm install
 
-# 3) Run all apps
-pnpm dev
+# 2) Start MongoDB (optional, if you run it via Docker Compose)
+docker compose up -d
+
+# 3) Build everything via Turbo (resolves package build order)
+pnpm -w run build
+
+# 4) Run server + web (dev mode)
+pnpm run dev:all
 ```
 
-อนุมัติสคริปต์ที่ถูกบล็อก (esbuild, protobufjs ฯลฯ)
-pnpm approve-builds
+### URLs
 
-ปัญหาTurborepo ต้องการฟิลด์ packageManager ใน package.json รันคำสั่งนี้
-$ver = pnpm -v
-pnpm pkg set packageManager="pnpm@$ver"
-
-ปัญหาใน apps/web/vite.config.ts เรา import '@vitejs/plugin-react' แต่ยังไม่ได้ติดตั้งแพ็กเกจตัวนี้
-pnpm --filter web add -D @vitejs/plugin-react
-
-ปัญหาติดตั้ง @types/cors ฝั่ง server เป็น devDependency:
-pnpm --filter server add -D @types/cors
-
-ปัญหาติดตั้ง @types/pg ฝั่ง server เป็น devDependency:
-pnpm --filter server add -D @types/pg
-
-- Web will run at: http://localhost:5173
-- Server will run at: http://localhost:4000
-- WebSocket URL: ws://localhost:4000
-
-The server loads `.env.development` automatically; the web app uses Vite's `.env.development`.
+- Web: <http://localhost:5173>
+- Server: <http://localhost:3001>
+- WebSocket Path: `/ws` (full `ws://localhost:3001/ws`)
 
 ---
 
-## TikTok Simulation Mode
+## Environment Variables (Server)
 
-You can simulate going live on TikTok by emitting random chat/gift/follow/share events from the server.
+Server loads `.env.<NODE_ENV>` automatically. Example `.env.development`:
 
-- Configure default mode in `apps/server/.env.development`:
-
-```
+```env
+NODE_ENV=development
+PORT=3001
+WS_PATH=/ws
+DATABASE_URL=mongodb://localhost:27017/tiktok_live_dev
+TIKTOK_USERNAME=telechubbiies
 TIKTOK_MODE=sim
 ```
 
-- Or choose per-connection via API:
+Notes
 
+- `TIKTOK_MODE`: `real` uses tiktok-live-connector, `sim` uses the built-in simulator
+- You can override mock file paths for the simulator with:
+  - `TIKTOK_SIM_CHAT_FILE`
+  - `TIKTOK_SIM_NAMES_FILE`
+
+Web uses Vite’s `.env.<mode>` in `apps/web` and should include `VITE_SERVER_HTTP_URL` and `VITE_SERVER_WS_URL` pointing to the server.
+
+---
+
+## Turbo Pipeline
+
+We use Turbo to build packages in the correct order.
+
+- Root scripts:
+  - `pnpm -w run build` → runs build across all packages (`^build` order)
+  - `pnpm -w run typecheck` → runs typecheck pipeline (reserved)
+  - `pnpm -w run lint` → lint all packages
+
+- Dev scripts:
+  - `pnpm run dev:all` → starts DB (compose), builds via Turbo, runs server + web
+  - `pnpm run dev:start` / `pnpm run dev:fast` → variants without compose
+
+---
+
+## TikTok Modes
+
+Two modes are supported via the server:
+
+- Real: uses `tiktok-live-connector`
+- Sim: emits random events: chat, gift, follow, share, like
+
+Configure default mode with `.env.<env>` on server:
+
+```env
+TIKTOK_MODE=sim
+```
+
+Or select per-connection via API:
+
+```http
 POST /api/tiktok/connect
+Content-Type: application/json
+
 {
   "username": "telechubbiies",
   "mode": "sim" // or "real"
 }
+```
 
-While in sim mode, the server periodically broadcasts events over WebSocket at `WS_PATH`.
+### WebSocket Broadcasts
 
-ติดตั้ง Library Dependency
+- `tiktok.status` — connection state
+- `tiktok.chat` — chat messages
+- `tiktok.gift` — gift events
+- `tiktok.follow` — follow events
+- `tiktok.share` — share events
+- `tiktok.like` — like bursts (`likeCount`, `totalLikeCount`)
 
-ติดตั้งเฉพาะ web
-# dependency ปกติ (runtime)
-pnpm --filter web add some-lib
-
-# devDependency (ใช้ตอน dev/build เท่านั้น)
-pnpm --filter web add -D @vitejs/plugin-react
-
-# เอาออก
-pnpm --filter web remove some-lib
-
-# อัปเดตเวอร์ชัน
-pnpm --filter web up some-lib
-
-ติดตั้งเฉพาะ server
-# dependency ปกติ
-pnpm --filter server add express ws
-
-# devDependency (พวก type definitions)
-pnpm --filter server add -D typescript @types/node @types/express
-
-# เอาออก
-pnpm --filter server remove ws
-
-# อัปเดต
-pnpm --filter server up express
+On the web, a wildcard event channel `tiktok.*` is emitted for easy logging/debugging.
 
 ---
 
-## Staging / Production
+## Simulator (Mock Files)
 
-You can reuse the same Docker Postgres locally and just switch environments:
+The simulator reads mock data from simple text files by default:
 
-**Server** (Windows-friendly via `cross-env`):
-```bash
-# Staging
-pnpm --filter server build
-pnpm --filter server cross-env NODE_ENV=staging node dist/index.js
+- `apps/server/mock/tiktok_chat_messages.txt` — one message per line
+- `apps/server/mock/tiktok_names.txt` — one display name per line
 
-# Production
-pnpm --filter server build
-pnpm --filter server cross-env NODE_ENV=production node dist/index.js
-```
+Rules
 
-**Web**:
-```bash
-# Staging build uses .env.staging
-pnpm --filter web build --mode staging
-pnpm --filter web preview --host
-
-# Production build uses .env.production
-pnpm --filter web build --mode production
-pnpm --filter web preview --host
-```
-
-> Adjust `VITE_SERVER_HTTP_URL` and `VITE_SERVER_WS_URL` in each web `.env.*` as needed.
+- Lines starting with `#` are treated as comments and ignored
+- Override per-machine with:
+  - `TIKTOK_SIM_CHAT_FILE`
+  - `TIKTOK_SIM_NAMES_FILE`
+- The resolver order is: env override → default repo file → built-in fallback
 
 ---
 
 ## Project Structure
 
-```
+```text
 tiktok-live-game/
   apps/
     server/
       src/
-      .env.development
-      .env.staging
-      .env.production
+        app.ts                 - Express app wiring (routes/middlewares)
+        server.ts              - HTTP + WebSocket server bootstrap
+        index.ts               - Entrypoint (starts server)
+        env.ts                 - Zod-validated environment loader
+        db.ts                  - Mongoose connection + health
+        tiktok.ts              - Wrapper for tiktok-live-connector (real mode)
+        controllers/
+          health.controller.ts - Health/status endpoints
+          tiktok.controller.ts - Connect/disconnect/status APIs
+        routes/
+          index.ts             - Route aggregator
+          health.routes.ts
+          tiktok.routes.ts
+        services/
+          tiktok.service.ts    - Mode switching service (real or simulated)
+        middlewares/
+          validate.ts          - zod validation middleware
+        lib/
+          ws.ts                - WebSocket server + broadcast helpers
+        models/
+          index.ts
+          Leaderboard.ts
+          Round.ts
+          Score.ts
+          Session.ts
+      mock/
+        tiktok_chat_messages.txt - Default chat messages
+        tiktok_names.txt          - Default display names
+      package.json
+      tsconfig.json
+
     web/
       src/
-      .env.development
-      .env.staging
-      .env.production
-  docker/
-    initdb.d/
-      01-create-dbs.sql
+        main.tsx
+        App.tsx
+        env.ts                   - Vite env accessors
+        app/
+          router.tsx             - App routes
+          store/
+            game.store.ts        - Client-side store
+        components/
+          ButtonMotion.tsx
+          PageTransition.tsx
+          SystemStatus.tsx
+          TimedProgressBar.tsx
+        hooks/
+          useAutoAdvance.ts
+          useBroadcast.ts
+          useCountdown.ts
+        pages/
+          Home.tsx
+          GameSelect.tsx
+          Play.tsx
+          RoundSummary.tsx
+          Rules.tsx
+          Scoreboard.tsx
+          Support.tsx
+          control/
+            ControlHome.tsx
+        services/
+          api.ts                 - HTTP client
+          ws.ts                  - Typed WebSocket client
+        assets/
+          ...
+        styles/
+          index.css, App.css     - Global styles
+      vite.config.ts
+      tsconfig.json
+      tsconfig.app.json
+      tsconfig.node.json
+      tailwind.config.js
+      eslint.config.js
+      package.json
+
+  packages/
+    types/
+      src/
+        index.ts
+        tiktok.ts               - Shared TikTok event types
+        game.ts                 - Shared game types
+        db.ts                   - Shared DB types
+      package.json
+      tsconfig.json
+    constants/
+      src/
+        index.ts
+        game.ts                 - Game definitions (uses shared types)
+      package.json
+      tsconfig.json
+    utils/
+      src/
+        index.ts                - Shared utilities
+      package.json
+      tsconfig.json
+
+  docker-compose.dev.yml
+  docker-compose.staging.yml
+  docker-compose.prod.yml
   turbo.json
   pnpm-workspace.yaml
   package.json
   tsconfig.base.json
-  docker-compose.yml
+  eslint.config.js
+  README.md
+  pnpm-lock.yaml
 ```
 
 ---
 
-## Notes
+## Troubleshooting
 
-- No Prisma is used. DB access is via `pg`.
-- The server broadcasts TikTok chat messages over websockets to the UI.
-- Simple scoreboard demo (top chatters) is implemented client-side.
-- Edit the TikTok username in `.env.*` (server and web) if needed.
+- If type changes aren’t reflected, run:
+  - `pnpm -w run build` to rebuild the graph (types → consumers)
 
 ---
+
+## License
+
+ISC
+
+Copyright (c) 2025 Telechubbiies
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES ...

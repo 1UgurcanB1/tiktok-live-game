@@ -39,11 +39,11 @@ export default function GameSelect() {
     <PageTransition className="gap-5">
       <TimedProgressBar
         duration={DEFAULT_TIMERS.selectGameMs}
-        onComplete={() => console.log("done!")}
+        onComplete={() => console.warn("done!")}
         className="w-85"
         trackClassName="bg-white/20"
         barClassName="bg-tangerine-pop"
-      ></TimedProgressBar>
+      />
       <div className="flex flex-col">
         {/* Header strip */}
         <h2 className="text-3xl text-white text-center font-extrabold">

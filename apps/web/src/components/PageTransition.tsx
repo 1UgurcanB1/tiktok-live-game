@@ -1,5 +1,5 @@
-import { forwardRef, type HTMLAttributes } from "react";
-import { motion, type MotionProps } from "framer-motion";
+import { type HTMLAttributes, forwardRef } from "react";
+import { type MotionProps, motion } from "framer-motion";
 
 type PageTransitionProps = HTMLAttributes<HTMLDivElement> &
   MotionProps & { className?: string };

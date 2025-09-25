@@ -1,16 +1,24 @@
-import {
+import type {
   ChatEventData,
-  GiftEventData,
   FollowEventData,
+  GiftEventData,
+  LikeEventData,
   ShareEventData,
 } from "@tiktok/types";
 import { randomId, sleep } from "@tiktok/utils";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// Memoization cache to avoid repeated filesystem traversal for package.json lookup
+const pkgJsonDirCache = new Map<string, string>();
 
 type EventMap = {
   chat: ChatEventData;
   gift: GiftEventData;
   follow: FollowEventData;
   share: ShareEventData;
+  like: LikeEventData;
   streamEnd: unknown;
   disconnected: unknown;
 };
@@ -21,11 +29,13 @@ export class SimulatedTikTokConnection {
   private username: string;
   private roomId: string;
   private timers: NodeJS.Timeout[] = [];
-  // ใช้โครงสร้างแบบหลวมเพื่อเลี่ยงปัญหา inferred never[]
   private listeners: Partial<
     Record<keyof EventMap, Array<(ev: unknown) => void>>
   > = {};
   private running = false;
+  private chatMessages: string[] = [];
+  private names: string[] = [];
+  private totalLikeCount = 0;
 
   constructor(username: string) {
     this.username = username;
@@ -33,12 +43,83 @@ export class SimulatedTikTokConnection {
   }
 
   async connect() {
+    // Load mock files async on first connect
+    if (this.chatMessages.length === 0 || this.names.length === 0) {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const envRoot = process.env.TIKTOK_SERVER_ROOT?.trim();
+      const serverRoot =
+        envRoot && envRoot.length
+          ? path.isAbsolute(envRoot)
+            ? envRoot
+            : path.resolve(process.cwd(), envRoot)
+          : await findNearestPackageJsonDir(__dirname);
+      const mockDir = path.join(serverRoot, "mock");
+      // Only allow relative env-provided paths that resolve under serverRoot to prevent traversal
+      const fromEnvUnderServerRoot = (p: string | undefined, varName: string) => {
+        if (!p) return undefined;
+        if (path.isAbsolute(p)) {
+          console.warn("[tiktok.sim] Ignoring absolute env path for", varName);
+          return undefined;
+        }
+        const resolved = path.resolve(serverRoot, p);
+        const rel = path.relative(serverRoot, resolved);
+        const inside = rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+        if (!inside) {
+          console.warn(
+            "[tiktok.sim] Ignoring env path outside server root",
+            { var: varName, requested: p, resolved, serverRoot },
+          );
+          return undefined;
+        }
+        return resolved;
+      };
+
+      const chatCandidates = [
+        fromEnvUnderServerRoot(process.env.TIKTOK_SIM_CHAT_FILE, "TIKTOK_SIM_CHAT_FILE"),
+        path.join(mockDir, "tiktok_chat_messages.txt"),
+      ].filter(Boolean) as string[];
+      this.chatMessages = await loadFirstExistingAsync(chatCandidates, [
+        "สวัสดีครับ",
+        "สู้ๆ นะ",
+        "แจกของหน่อย",
+        "เกมอะไรครับ",
+        "5555",
+        "Nice!",
+        "Let's go!",
+        "สุดยอด",
+      ]);
+
+      const nameCandidates = [
+        fromEnvUnderServerRoot(process.env.TIKTOK_SIM_NAMES_FILE, "TIKTOK_SIM_NAMES_FILE"),
+        path.join(mockDir, "tiktok_names.txt"),
+      ].filter(Boolean) as string[];
+      this.names = await loadFirstExistingAsync(nameCandidates, [
+        "Alice",
+        "Bob",
+        "Carol",
+        "Dave",
+        "Eve",
+        "Mallory",
+        "Oscar",
+        "Peggy",
+        "Victor",
+        "Walter",
+        "Trudy",
+        "Sybil",
+        "Grace",
+        "Heidi",
+        "Ivan",
+        "Judy",
+      ]);
+    }
+
     this.running = true;
-    // kick off event generators
     this.spawnChatLoop();
     this.spawnGiftLoop();
     this.spawnShareLoop();
     this.spawnFollowLoop();
+    this.spawnLikeLoop();
     return { roomId: this.roomId };
   }
 
@@ -46,19 +127,19 @@ export class SimulatedTikTokConnection {
     this.running = false;
     for (const t of this.timers) clearTimeout(t);
     this.timers = [];
+    this.totalLikeCount = 0;
     this.emit("disconnected", undefined as unknown as never);
   }
 
   on<E extends keyof EventMap>(event: E, cb: Listener<E>) {
-    if (!this.listeners[event])
-      this.listeners[event] = [] as Array<(ev: unknown) => void>;
-    const arr = this.listeners[event]!;
+    const arr: Array<(ev: unknown) => void> = this.listeners[event] ?? [];
     arr.push(cb as unknown as (ev: unknown) => void);
+    this.listeners[event] = arr;
   }
 
   private emit<E extends keyof EventMap>(event: E, data: EventMap[E]) {
-    for (const cb of this.listeners[event] || [])
-      (cb as (ev: EventMap[E]) => void)(data);
+    const arr = this.listeners[event] || [];
+    for (const cb of arr) (cb as (ev: EventMap[E]) => void)(data);
   }
 
   private spawnChatLoop() {
@@ -71,32 +152,14 @@ export class SimulatedTikTokConnection {
           userId: randUserId(),
           secUid: randomId(24),
           uniqueId: `user_${randInt(1000, 9999)}`,
-          nickname:
-            pick([
-              "Alice",
-              "Bob",
-              "Carol",
-              "Dave",
-              "Eve",
-              "Mallory",
-              "Oscar",
-              "Peggy",
-            ]) + randSuffix(),
+          nickname: pick(this.names) + randSuffix(),
           profilePictureUrl: null,
-          comment: pick([
-            "สวัสดีครับ",
-            "สู้ๆ นะ",
-            "แจกของหน่อย",
-            "เกมอะไรครับ",
-            "5555",
-            "Nice!",
-          ]),
+          comment: pick(this.chatMessages),
           createTime: Date.now().toString(),
         };
         this.emit("chat", data);
       }
     };
-    // fire and forget
     run();
   }
 
@@ -113,7 +176,7 @@ export class SimulatedTikTokConnection {
           userId: randUserId(),
           secUid: randomId(24),
           uniqueId: `user_${randInt(1000, 9999)}`,
-          nickname: pick(["VIP", "Donor", "RichBoy", "Angel"]) + randSuffix(),
+          nickname: pick(this.names) + randSuffix(),
           profilePictureUrl: null,
           giftId,
           repeatCount: repeat,
@@ -140,7 +203,7 @@ export class SimulatedTikTokConnection {
           userId: randUserId(),
           secUid: randomId(24),
           uniqueId: `user_${randInt(1000, 9999)}`,
-          nickname: pick(["Fan", "Viewer", "Guest"]) + randSuffix(),
+          nickname: pick(this.names) + randSuffix(),
           profilePictureUrl: null,
           createTime: Date.now().toString(),
         };
@@ -160,7 +223,7 @@ export class SimulatedTikTokConnection {
           userId: randUserId(),
           secUid: randomId(24),
           uniqueId: `user_${randInt(1000, 9999)}`,
-          nickname: pick(["Fan", "Viewer", "Guest"]) + randSuffix(),
+          nickname: pick(this.names) + randSuffix(),
           profilePictureUrl: null,
           createTime: Date.now().toString(),
         };
@@ -169,6 +232,58 @@ export class SimulatedTikTokConnection {
     };
     run();
   }
+
+  private spawnLikeLoop() {
+    const run = async () => {
+      while (this.running) {
+        const delay = randInt(300, 1200);
+        await sleep(delay);
+        if (!this.running) break;
+        const likeCount = pick([1, 1, 1, 2, 2, 3, 5, 10]);
+        this.totalLikeCount += likeCount;
+        const data: LikeEventData = {
+          userId: randUserId(),
+          secUid: randomId(24),
+          uniqueId: `user_${randInt(1000, 9999)}`,
+          nickname: pick(this.names) + randSuffix(),
+          profilePictureUrl: null,
+          likeCount,
+          totalLikeCount: this.totalLikeCount,
+          msgId: randomId(12),
+          createTime: Date.now().toString(),
+        };
+        this.emit("like", data);
+      }
+    };
+    run();
+  }
+}
+
+async function loadFirstExistingAsync(
+  paths: string[],
+  fallback: string[],
+): Promise<string[]> {
+  for (const p of paths) {
+    try {
+      if (!p) continue;
+      const raw = await fs.promises.readFile(p, "utf8");
+      const lines = raw
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter((s) => s && !s.startsWith("#"));
+      if (lines.length) return lines;
+    } catch (err) {
+      // Provide context to help diagnose configuration/path issues
+      const e = err as { code?: string; message?: string };
+      console.warn("[tiktok.sim] Failed to read mock file", {
+        path: p,
+        code: e?.code,
+        message: e?.message,
+      });
+      // try next candidate
+    }
+  }
+  return fallback;
 }
 
 function randInt(min: number, max: number) {
@@ -182,4 +297,35 @@ function pick<T>(arr: readonly T[]): T {
 }
 function randSuffix() {
   return Math.random() < 0.2 ? randInt(1, 99).toString() : "";
+}
+
+async function findNearestPackageJsonDir(
+  startDir: string,
+  maxDepth = 6,
+): Promise<string> {
+  const key = `${path.resolve(startDir)}|${maxDepth}`;
+  const cached = pkgJsonDirCache.get(key);
+  if (cached) return cached;
+  let dir = startDir;
+  const root = path.parse(dir).root;
+  for (let depth = 0; depth <= maxDepth; depth++) {
+    try {
+      const st = await fs.promises.stat(path.join(dir, "package.json"));
+      if (st.isFile()) {
+        pkgJsonDirCache.set(key, dir);
+        return dir;
+      }
+    } catch {
+      // not found here, continue upwards
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir || dir === root) break;
+    dir = parent;
+  }
+  console.warn(
+    "[tiktok.sim] package.json not found within maxDepth; falling back to startDir",
+    { startDir, maxDepth },
+  );
+  pkgJsonDirCache.set(key, startDir);
+  return startDir;
 }

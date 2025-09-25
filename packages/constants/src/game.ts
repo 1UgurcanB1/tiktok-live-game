@@ -1,5 +1,4 @@
-import type { GameConfig } from "@tiktok/types";
-import type { PageTimers } from "@tiktok/types";
+import type { PageTimers, GameConfig } from "@tiktok/types";
 
 export const DEFAULT_TIMERS: PageTimers = {
   selectGameMs: 3 * 60_000,
@@ -23,5 +22,5 @@ export const GAMES: GameConfig[] = [
       "เกมนี้จะมีคำศัพท์ภาษาไทยให้ทายทั้งหมด 10 คำ",
       "ผู้เล่นจะต้องทายคำศัพท์ให้ถูกต้องภายในเวลาที่กำหนด",
     ],
-  }
+  },
 ];

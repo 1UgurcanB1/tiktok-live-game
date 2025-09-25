@@ -17,12 +17,11 @@ export function createApp(): Application {
 
   // 404
   app.use((_req, res) =>
-    res.status(404).json({ ok: false, error: "Not Found" })
+    res.status(404).json({ ok: false, error: "Not Found" }),
   );
 
   // error handler กลาง (Express 5 รองรับ async)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // The `_next` parameter is intentionally unused here, but must be present for Express to recognize this as an error-handling middleware.
+  // underscore-prefixed `_next` is intentionally unused; presence keeps 4-arg signature for Express
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     console.error(err);
     res.status(500).json({ ok: false, error: "Internal Server Error" });

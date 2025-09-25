@@ -5,12 +5,12 @@ import { WebSocketServer } from "ws";
 import { connectMongo, healthMongo } from "./db.js";
 import { env } from "./env.js";
 import type {
-  DBStatusEvent,
-  TikTokStatusEvent,
-  ChatEventData,
   ChatEvent,
-  GiftEventData,
+  ChatEventData,
+  DBStatusEvent,
   GiftEvent,
+  GiftEventData,
+  TikTokStatusEvent,
 } from "@tiktok/types";
 import { TikTokLiveService } from "./tiktok.js";
 import { toISO } from "@tiktok/utils";
@@ -122,5 +122,5 @@ app.get("/api/tiktok/status", (_req, res) => {
 });
 
 server.listen(env.PORT, () =>
-  console.log(`[server] http://localhost:${env.PORT} ws:${env.WS_PATH}`),
+  console.warn(`[server] http://localhost:${env.PORT} ws:${env.WS_PATH}`),
 );

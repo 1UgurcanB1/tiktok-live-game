@@ -1,5 +1,5 @@
-import { forwardRef, type ButtonHTMLAttributes } from "react";
-import { motion, type MotionProps } from "framer-motion";
+import { type ButtonHTMLAttributes, forwardRef } from "react";
+import { type MotionProps, motion } from "framer-motion";
 
 type ButtonMotionProps = ButtonHTMLAttributes<HTMLButtonElement> & MotionProps;
 
@@ -14,19 +14,17 @@ const ButtonMotion = forwardRef<HTMLButtonElement, ButtonMotionProps>(
       ...rest
     },
     ref,
-  ) => {
-    return (
-      <motion.button
-        ref={ref}
-        className={["cursor-pointer", className].filter(Boolean).join(" ")}
-        whileHover={whileHover}
-        whileTap={whileTap}
-        {...rest}
-      >
-        {children}
-      </motion.button>
-    );
-  },
+  ) => (
+    <motion.button
+      ref={ref}
+      className={["cursor-pointer", className].filter(Boolean).join(" ")}
+      whileHover={whileHover}
+      whileTap={whileTap}
+      {...rest}
+    >
+      {children}
+    </motion.button>
+  ),
 );
 
 export default ButtonMotion;

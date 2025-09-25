@@ -32,12 +32,12 @@ export default function App() {
             signal: ac.signal,
             mode: env.VITE_TIKTOK_MODE,
           });
-          console.info("Tiktok Connected successfully:", res);
+          console.warn("Tiktok Connected successfully:", res);
         } else {
-          console.info("Skip TikTok connect: VITE_TIKTOK_USERNAME is empty");
+          console.warn("Skip TikTok connect: VITE_TIKTOK_USERNAME is empty");
         }
       } catch (e) {
-        console.info("Unable to connect TikTok:", e);
+        console.warn("Unable to connect TikTok:", e);
       } finally {
         if (!abortedRef.current) setBooted(true);
       }
@@ -47,7 +47,7 @@ export default function App() {
     const offLog = events.on("tiktok.*", (ev: unknown) => {
       try {
         const obj = ev as { type?: string };
-        console.info("[tiktok]", obj?.type ?? "event", ev);
+        console.warn("[tiktok]", obj?.type ?? "event", ev);
       } catch {
         // no-op
       }

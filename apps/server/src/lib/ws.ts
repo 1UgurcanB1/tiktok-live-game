@@ -1,6 +1,14 @@
 import { WebSocketServer } from "ws";
 import type { Server } from "node:http";
-import type { ChatEvent, GiftEvent, TikTokStatusEvent, DBStatusEvent, FollowEvent, ShareEvent } from "@tiktok/types";
+import type {
+  ChatEvent,
+  DBStatusEvent,
+  FollowEvent,
+  GiftEvent,
+  LikeEvent,
+  ShareEvent,
+  TikTokStatusEvent,
+} from "@tiktok/types";
 import { env } from "../env.js";
 
 // ถ้าคุณมี union type ของอีเวนต์ทั้งหมดใน @tiktok/types กำหนดมาแทน any ก็ได้
@@ -18,6 +26,7 @@ type OutboundEvent =
   | GiftEvent
   | FollowEvent
   | ShareEvent
+  | LikeEvent
   | TikTokStatusEvent
   | DBStatusEvent
   | unknown;

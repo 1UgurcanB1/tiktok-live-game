@@ -1,10 +1,10 @@
 // apps/web/src/services/api.ts
 import { env } from "../env";
 import type {
-  GameConfig,
-  Session,
-  LeaderboardDaily,
   DBStatusEvent,
+  GameConfig,
+  LeaderboardDaily,
+  Session,
   TikTokStatusEvent,
 } from "@tiktok/types";
 

@@ -3,8 +3,9 @@ import { SimulatedTikTokConnection } from "./tiktok.sim.js";
 import { env } from "../env.js";
 import type {
   ChatEventData,
-  GiftEventData,
   FollowEventData,
+  GiftEventData,
+  LikeEventData,
   ShareEventData,
   SocialEventData,
 } from "@tiktok/types";
@@ -14,6 +15,7 @@ type EventMap = {
   gift: GiftEventData;
   follow: FollowEventData;
   share: ShareEventData;
+  like: LikeEventData;
   social: SocialEventData;
   streamEnd: unknown;
   disconnected: unknown;
@@ -34,7 +36,7 @@ class TikTokSwitchingService {
   > = {};
 
   get connected() {
-    return this._mode === "real" ? this.real.connected : !!this.sim;
+    return this._mode === "real" ? this.real.connected : Boolean(this.sim);
   }
   get username() {
     return this._username;
@@ -76,10 +78,13 @@ class TikTokSwitchingService {
       });
       // attach stored listeners to real connection
       this.listeners.chat?.forEach((cb) =>
-        this.real.on("chat", cb as (v: ChatEventData) => void)
+        this.real.on("chat", cb as (v: ChatEventData) => void),
       );
       this.listeners.gift?.forEach((cb) =>
-        this.real.on("gift", cb as (v: GiftEventData) => void)
+        this.real.on("gift", cb as (v: GiftEventData) => void),
+      );
+      this.listeners.like?.forEach((cb) =>
+        this.real.on("like", cb as (v: LikeEventData) => void),
       );
       return { roomId: this._roomId };
     } else {
@@ -93,18 +98,23 @@ class TikTokSwitchingService {
         this.sim = null;
       });
       // attach stored listeners to sim connection
-      this.listeners.chat?.forEach((cb) =>
-        this.sim!.on("chat", cb as (v: ChatEventData) => void)
-      );
-      this.listeners.gift?.forEach((cb) =>
-        this.sim!.on("gift", cb as (v: GiftEventData) => void)
-      );
-      this.listeners.follow?.forEach((cb) =>
-        this.sim!.on("follow", cb as (v: FollowEventData) => void)
-      );
-      this.listeners.share?.forEach((cb) =>
-        this.sim!.on("share", cb as (v: ShareEventData) => void)
-      );
+      if (this.sim) {
+        this.listeners.chat?.forEach((cb) =>
+          this.sim?.on("chat", cb as (v: ChatEventData) => void),
+        );
+        this.listeners.gift?.forEach((cb) =>
+          this.sim?.on("gift", cb as (v: GiftEventData) => void),
+        );
+        this.listeners.follow?.forEach((cb) =>
+          this.sim?.on("follow", cb as (v: FollowEventData) => void),
+        );
+        this.listeners.share?.forEach((cb) =>
+          this.sim?.on("share", cb as (v: ShareEventData) => void),
+        );
+        this.listeners.like?.forEach((cb) =>
+          this.sim?.on("like", cb as (v: LikeEventData) => void),
+        );
+      }
       return { roomId: this._roomId };
     }
   }
@@ -122,10 +132,9 @@ class TikTokSwitchingService {
 
   on<E extends keyof EventMap>(event: E, cb: Listener<E>) {
     // store only; will be attached when connect() is called
-    if (!this.listeners[event])
-      this.listeners[event] = [] as Array<(v: unknown) => void>;
-    const arr = this.listeners[event]!;
+    const arr: Array<(v: unknown) => void> = this.listeners[event] ?? [];
     arr.push(cb as unknown as (v: unknown) => void);
+    this.listeners[event] = arr;
   }
 }
 
