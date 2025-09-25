@@ -22,17 +22,18 @@ export interface RoundSpec {
 
 export interface GameConfig {
   id: GameId;
+  order?: number;
   name: string;
   description: string;
-  defaultRounds: number; // 10–20
+  defaultRounds: number;
   defaultRoundDurationMs: number;
-  /** optional category metadata for grouping/filtering in UI */
-  category?: string;
+  category: string;
   categoryDescription?: string;
-  gameImage?: string; // URL or asset path
-  /** optional static rules copy for UI */
-  rules?: string[];
-  timersOverride?: Partial<PageTimers>; // เฉพาะเกมนี้
+  gameImage: string;
+  rules: string[];
+  timersOverride?: Partial<PageTimers>;
+  highlight?: boolean;
+  votes?: number;
 }
 
 export interface Session {
