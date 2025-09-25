@@ -164,6 +164,6 @@ function isEmptyValue(v: any, treatEmptyArrayObjectAsValue: boolean): boolean {
   }
   if (typeof v === "object") {
     return treatEmptyArrayObjectAsValue ? false : Object.keys(v).length === 0;
-  } // treat empty object as empty unless overridden
+  } // Treat empty object as empty unless overridden
   return false; // numbers/booleans considered non-empty (even 0/false)
 }
