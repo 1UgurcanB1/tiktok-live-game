@@ -134,7 +134,7 @@ class TikTokSwitchingService {
     // store only; will be attached when connect() is called
     if (!this.listeners[event])
       this.listeners[event] = [] as Array<(v: unknown) => void>;
-    const arr = (this.listeners[event] ??= [] as Array<(v: unknown) => void>);
+    const arr = this.listeners[event] as Array<(v: unknown) => void>;
     arr.push(cb as unknown as (v: unknown) => void);
   }
 }

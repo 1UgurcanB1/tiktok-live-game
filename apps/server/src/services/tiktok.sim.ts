@@ -108,7 +108,7 @@ export class SimulatedTikTokConnection {
   on<E extends keyof EventMap>(event: E, cb: Listener<E>) {
     if (!this.listeners[event])
       this.listeners[event] = [] as Array<(ev: unknown) => void>;
-    const arr = (this.listeners[event] ??= [] as Array<(ev: unknown) => void>);
+    const arr = this.listeners[event] as Array<(ev: unknown) => void>;
     arr.push(cb as unknown as (ev: unknown) => void);
   }
 
