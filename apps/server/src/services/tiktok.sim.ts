@@ -56,7 +56,10 @@ export class SimulatedTikTokConnection {
           : await findNearestPackageJsonDir(__dirname);
       const mockDir = path.join(serverRoot, "mock");
       // Only allow relative env-provided paths that resolve under serverRoot to prevent traversal
-      const fromEnvUnderServerRoot = (p: string | undefined, varName: string) => {
+      const fromEnvUnderServerRoot = (
+        p: string | undefined,
+        varName: string,
+      ) => {
         if (!p) return undefined;
         if (path.isAbsolute(p)) {
           console.warn("[tiktok.sim] Ignoring absolute env path for", varName);
@@ -64,19 +67,25 @@ export class SimulatedTikTokConnection {
         }
         const resolved = path.resolve(serverRoot, p);
         const rel = path.relative(serverRoot, resolved);
-        const inside = rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+        const inside =
+          rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
         if (!inside) {
-          console.warn(
-            "[tiktok.sim] Ignoring env path outside server root",
-            { var: varName, requested: p, resolved, serverRoot },
-          );
+          console.warn("[tiktok.sim] Ignoring env path outside server root", {
+            var: varName,
+            requested: p,
+            resolved,
+            serverRoot,
+          });
           return undefined;
         }
         return resolved;
       };
 
       const chatCandidates = [
-        fromEnvUnderServerRoot(process.env.TIKTOK_SIM_CHAT_FILE, "TIKTOK_SIM_CHAT_FILE"),
+        fromEnvUnderServerRoot(
+          process.env.TIKTOK_SIM_CHAT_FILE,
+          "TIKTOK_SIM_CHAT_FILE",
+        ),
         path.join(mockDir, "tiktok_chat_messages.txt"),
       ].filter(Boolean) as string[];
       this.chatMessages = await loadFirstExistingAsync(chatCandidates, [
@@ -91,7 +100,10 @@ export class SimulatedTikTokConnection {
       ]);
 
       const nameCandidates = [
-        fromEnvUnderServerRoot(process.env.TIKTOK_SIM_NAMES_FILE, "TIKTOK_SIM_NAMES_FILE"),
+        fromEnvUnderServerRoot(
+          process.env.TIKTOK_SIM_NAMES_FILE,
+          "TIKTOK_SIM_NAMES_FILE",
+        ),
         path.join(mockDir, "tiktok_names.txt"),
       ].filter(Boolean) as string[];
       this.names = await loadFirstExistingAsync(nameCandidates, [
