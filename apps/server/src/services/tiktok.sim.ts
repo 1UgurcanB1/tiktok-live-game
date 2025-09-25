@@ -1,9 +1,9 @@
 import type {
   ChatEventData,
-  GiftEventData,
   FollowEventData,
-  ShareEventData,
+  GiftEventData,
   LikeEventData,
+  ShareEventData,
 } from "@tiktok/types";
 import { randomId, sleep } from "@tiktok/utils";
 import fs from "node:fs";
@@ -271,19 +271,25 @@ function randSuffix() {
   return Math.random() < 0.2 ? randInt(1, 99).toString() : "";
 }
 
-async function findNearestPackageJsonDir(startDir: string): Promise<string> {
+async function findNearestPackageJsonDir(
+  startDir: string,
+  maxDepth = 6,
+): Promise<string> {
   let dir = startDir;
   const root = path.parse(dir).root;
+  let depth = 0;
   while (true) {
     try {
-      await fs.promises.access(path.join(dir, "package.json"));
-      return dir;
+      const st = await fs.promises.stat(path.join(dir, "package.json"));
+      if (st.isFile()) return dir;
     } catch {
-      const parent = path.dirname(dir);
-      if (parent === dir || dir === root) break;
-      dir = parent;
+      // not found here, continue upwards
     }
+    const parent = path.dirname(dir);
+    if (parent === dir || dir === root || depth >= maxDepth) break;
+    dir = parent;
+    depth++;
   }
-  // fallback to startDir if not found
+  // fallback to startDir if not found within maxDepth
   return startDir;
 }
