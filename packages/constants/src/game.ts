@@ -34,8 +34,7 @@ export const GAMES: GameConfig[] = [
     name: "ทายคำภาษาอังกฤษ",
     category: "guessWord",
     categoryDescription: "ทายคำ",
-    description:
-      "เหมือนทายคำไทย แต่เป็นคำศัพท์ภาษาอังกฤษ ฝึกคลังคำและการสะกด",
+    description: "เหมือนทายคำไทย แต่เป็นคำศัพท์ภาษาอังกฤษ ฝึกคลังคำและการสะกด",
     defaultRounds: 10,
     defaultRoundDurationMs: 40_000,
     gameImage: "https://cdn-icons-png.flaticon.com/512/5087/5087579.png",
