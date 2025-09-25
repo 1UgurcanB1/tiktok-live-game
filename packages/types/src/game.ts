@@ -34,6 +34,11 @@ export interface GameConfig {
   timersOverride?: Partial<PageTimers>;
   highlight?: boolean;
   votes?: number;
+  // Optional English localized overrides (Thai = default in base fields)
+  nameEn?: string;
+  descriptionEn?: string;
+  categoryDescriptionEn?: string;
+  rulesEn?: string[];
 }
 
 export interface Session {
