@@ -1,7 +1,7 @@
 import i18n from "../i18n";
 
 // WeakMap-based cache: object -> (compositeKey -> value)
-// We use a generation number for O(1) global invalidation (no need to iterate WeakMap – it's not iterable).
+// We use a generation number for O(1) global invalidation (no need to iterate WeakMap – which is not iterable).
 const _localizedCache: WeakMap<object, Map<string, any>> = new WeakMap();
 let _cacheGeneration = 0;
 
