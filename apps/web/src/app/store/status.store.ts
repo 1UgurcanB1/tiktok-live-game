@@ -1,7 +1,5 @@
 import { create } from "zustand";
 import type { DBStatusEvent, TikTokStatusEvent } from "@tiktok/types";
-// TODO: Update the import path below if Toast is located elsewhere
-// Update the path below to the correct location of your Toast component
 import { pushToast } from "../../components/Toast";
 
 interface StatusState {
