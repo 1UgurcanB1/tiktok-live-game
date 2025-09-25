@@ -132,10 +132,9 @@ class TikTokSwitchingService {
 
   on<E extends keyof EventMap>(event: E, cb: Listener<E>) {
     // store only; will be attached when connect() is called
-    if (!this.listeners[event])
-      this.listeners[event] = [] as Array<(v: unknown) => void>;
-    const arr = this.listeners[event] as Array<(v: unknown) => void>;
+    const arr: Array<(v: unknown) => void> = this.listeners[event] ?? [];
     arr.push(cb as unknown as (v: unknown) => void);
+    this.listeners[event] = arr;
   }
 }
 
