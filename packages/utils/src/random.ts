@@ -1,4 +1,16 @@
 /** ---------- Random & Sampling ---------- */
+/**
+ * Internal minimum positive weight threshold. Any weight below this (or non-finite / <= 0)
+ * is treated as zero to avoid division by zero or extremely large magnitude keys.
+ */
+const MIN_POSITIVE_WEIGHT = 1e-12;
+
+/** Normalize a raw weight value into a safe positive number or 0. */
+function normalizeWeight(raw: unknown): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return n < MIN_POSITIVE_WEIGHT ? MIN_POSITIVE_WEIGHT : n;
+}
 export const shuffle = <T>(arr: readonly T[]): T[] => {
   const copy = arr.slice();
   for (let i = copy.length - 1; i > 0; i--) {
@@ -42,15 +54,25 @@ export function weightedPickBy<T>(
   weight: (x: T) => number,
 ): T | undefined {
   if (!items.length) return undefined;
-  const ws = items.map((it) => Math.max(0, Number(weight(it)) || 0));
-  const total = ws.reduce((a, b) => a + b, 0);
+  // Build weights array with explicit finite / positive checks.
+  const ws: number[] = new Array(items.length);
+  let total = 0;
+  for (let i = 0; i < items.length; i++) {
+    const w = normalizeWeight(weight(items[i]));
+    ws[i] = w;
+    total += w;
+  }
   if (total <= 0) return undefined;
   let r = Math.random() * total;
   for (let i = 0; i < items.length; i++) {
-    r -= ws[i];
+    const w = ws[i];
+    if (w === 0) continue;
+    r -= w;
     if (r <= 0) return items[i];
   }
-  return items[items.length - 1];
+  // Fallback: return the last item that had a non-zero weight (should rarely reach).
+  for (let i = items.length - 1; i >= 0; i--) if (ws[i] > 0) return items[i];
+  return undefined;
 }
 
 export function weightedSampleBy<T>(
@@ -74,10 +96,11 @@ export function weightedSampleBy<T>(
   type Node = { item: T; key: number };
   const nodes: Node[] = [];
   for (const it of items) {
-    const w = Math.max(0, Number(weight(it)) || 0);
-    if (w <= 0) continue;
+    const w = normalizeWeight(weight(it));
+    if (w === 0) continue; // skip zero / invalid weights
     const u = Math.random();
-    const key = Math.log(u === 0 ? Number.EPSILON : u) / w;
+    // Using log(u)/w (Gumbel-top-k trick variant). Guard against u=0 and min weight.
+    const key = Math.log(u === 0 ? Number.EPSILON : u) / w; // w already >= MIN_POSITIVE_WEIGHT
     nodes.push({ item: it, key });
   }
   if (nodes.length === 0) return [];
