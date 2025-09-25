@@ -83,7 +83,6 @@ const TimedProgressBar = forwardRef<ProgressBarHandle, ProgressBarProps>(
             else {
               completeTimeoutRef.current = window.setTimeout(() => {
                 onComplete();
-                completeTimeoutRef.current = null;
               }, completeDelayMs);
             }
           }
