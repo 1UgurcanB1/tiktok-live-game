@@ -1,5 +1,19 @@
 import i18n from "../i18n";
 
+// WeakMap-based cache: object -> (compositeKey -> value)
+// We use a generation number for O(1) global invalidation (no need to iterate WeakMap – it's not iterable).
+const _localizedCache: WeakMap<object, Map<string, any>> = new WeakMap();
+let _cacheGeneration = 0;
+
+/**
+ * Increment the cache generation so all previously stored entries become obsolete.
+ * We don't need to physically delete old Maps; their entries become unreachable since generation
+ * is part of the composite key. Old entries will be garbage collected naturally.
+ */
+export function clearLocalizedCache() {
+  _cacheGeneration++;
+}
+
 /**
  * Generic localization accessor.
  * Pattern: base key holds Thai (default). English (or other locales) live in `${key}${suffix}`.
@@ -22,6 +36,8 @@ export function localized<T extends Record<string, any>, K extends string>(
      * Matching rule: pick the longest key in the map that is a prefix of current lang (case-insensitive).
      */
     suffixMap?: Record<string, string>;
+    /** Enable or disable cache (default true unless an emptyFactory provided). */
+    useCache?: boolean;
   },
 ): any {
   const {
@@ -31,6 +47,7 @@ export function localized<T extends Record<string, any>, K extends string>(
     emptyFactory,
     treatEmptyArrayObjectAsValue = false,
     suffixMap,
+    useCache = !options?.emptyFactory, // avoid caching when custom emptyFactory alters semantics
   } = options || {};
 
   // Helper to decide an "empty" placeholder based on existing base value (best-effort)
@@ -77,19 +94,66 @@ export function localized<T extends Record<string, any>, K extends string>(
 
   const altKey = key + resolvedSuffix;
 
+  // Build cache key (post suffix resolution). Include flags that influence decision logic.
+  // Note: We do NOT include the presence of suffixMap itself—only its resolution outcome (resolvedSuffix + matched flag).
+  // If object is mutable and its localized fields can change, caller should disable cache.
+  let cached: any;
+  let cacheKey: string | undefined;
+  if (useCache && typeof obj === "object" && obj !== null && !emptyFactory) {
+    cacheKey = [
+      _cacheGeneration,
+      key,
+      lang,
+      resolvedSuffix,
+      matchedByMap ? 1 : 0,
+      targetLangPrefix,
+      treatEmptyArrayObjectAsValue ? 1 : 0,
+    ].join("|");
+    const inner =
+      _localizedCache.get(obj) ||
+      (() => {
+        const m = new Map<string, any>();
+        _localizedCache.set(obj as object, m);
+        return m;
+      })();
+    if (inner.has(cacheKey)) {
+      return inner.get(cacheKey);
+    }
+    // We'll compute and then store before returning.
+    cached = inner;
+  }
+
   const wantAlt = lang.toLowerCase().startsWith(targetLangPrefix.toLowerCase());
   const hasAlt = Object.prototype.hasOwnProperty.call(obj, altKey);
   // If using suffixMap, rely on match presence; otherwise use targetLangPrefix rule.
   const shouldTryAlt = matchedByMap ? hasAlt : wantAlt && hasAlt;
+  let result: any;
   if (shouldTryAlt) {
     const altVal = (obj as any)[altKey];
-    if (!isEmptyValue(altVal, treatEmptyArrayObjectAsValue)) return altVal;
+    if (!isEmptyValue(altVal, treatEmptyArrayObjectAsValue)) {
+      result = altVal;
+    }
   }
-  if (!isEmptyValue(baseVal, treatEmptyArrayObjectAsValue)) return baseVal;
-  // Infer empty from whichever sample we have (prefer alt shape if base missing)
-  return inferEmpty(
-    baseVal !== undefined ? baseVal : hasAlt ? (obj as any)[altKey] : undefined,
-  );
+  if (
+    result === undefined &&
+    !isEmptyValue(baseVal, treatEmptyArrayObjectAsValue)
+  ) {
+    result = baseVal;
+  }
+  if (result === undefined) {
+    result = inferEmpty(
+      baseVal !== undefined
+        ? baseVal
+        : hasAlt
+          ? (obj as any)[altKey]
+          : undefined,
+    );
+  }
+
+  if (cacheKey && cached) {
+    (cached as Map<string, any>).set(cacheKey, result);
+  }
+  return result;
 }
 
 function isEmptyValue(v: any, treatEmptyArrayObjectAsValue: boolean): boolean {
