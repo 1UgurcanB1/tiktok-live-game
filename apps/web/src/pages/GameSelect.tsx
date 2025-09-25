@@ -7,6 +7,7 @@ import { fairSampleByKey } from "@tiktok/utils";
 import type { GameConfig } from "@tiktok/types";
 import { events } from "../services/ws";
 import { useGameStore } from "../app/store/game.store";
+import SystemStatus from "../components/SystemStatus";
 
 type GameItem = {
   order: number; // 0..5 แสดงตัวเลขนี้แทน id
@@ -160,66 +161,71 @@ export default function GameSelect() {
   };
 
   return (
-    <PageTransition className="gap-5">
-      <TimedProgressBar
-        duration={DEFAULT_TIMERS.selectGameMs}
-        onComplete={onComplete}
-        className="w-75"
-        trackClassName="bg-white/20"
-        barClassName="bg-tangerine-pop"
-      />
-      <div className="flex flex-col">
-        {/* Header strip */}
-        <h2 className="text-3xl text-white text-center font-extrabold">
-          เลือกเกม
-        </h2>
-        <h4 className="text-xl text-arctic-sky text-center">
-          (สำหรับผู้ติดตามเท่านั้น)
-        </h4>
-        <hr className="mt-6" />
-
-        {/* Body */}
-        <div className="p-5 space-y-5">
-          {games.map((g) => (
-            <button
-              key={g.order}
-              onClick={() => (g.onClick ?? handleClick)(g.order)}
-              className="w-full text-left group"
-            >
-              {/* meta */}
-              <div className="px-2 text-lg text-[#a7d3ff]/90 flex items-center gap-4 mb-1">
-                <span>
-                  <span className="opacity-80">ประเภท:</span>{" "}
-                  <span className="font-semibold">{g.category}</span>
-                </span>
-                <span className="opacity-80">
-                  โหวต:{" "}
-                  <span className="font-semibold text-white">{g.votes}</span>
-                </span>
-              </div>
-
-              {/* pill */}
-              <div className="relative bg-black text-white rounded-full h-14 flex items-center pl-16 pr-5 transition-transform duration-150 group-active:scale-[0.98]">
-                {/* index bubble */}
-                <div
-                  className={[
-                    "absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full grid place-items-center text-[#1b2a52] font-extrabold text-4xl",
-                    g.highlight ? "bg-[#ffa654]" : "bg-[#b9dcff]",
-                  ].join(" ")}
-                >
-                  {g.order}
-                </div>
-
-                {/* title */}
-                <div className="font-medium text-lg tracking-wide truncate">
-                  {g.title}
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
+    <div className="h-full w-full">
+      <div className="w-full flex items-center gap-6">
+        <TimedProgressBar
+          duration={DEFAULT_TIMERS.selectGameMs}
+          onComplete={onComplete}
+          className="flex-1"
+          trackClassName="bg-white/20"
+          barClassName="bg-tangerine-pop"
+        />
+        <SystemStatus />
       </div>
-    </PageTransition>
+      <PageTransition className="gap-5 py-6">
+        <div className="flex flex-col">
+          {/* Header strip */}
+          <h2 className="text-3xl text-white text-center font-extrabold">
+            เลือกเกม
+          </h2>
+          <h4 className="text-xl text-arctic-sky text-center">
+            (สำหรับผู้ติดตามเท่านั้น)
+          </h4>
+          <hr className="mt-6" />
+
+          {/* Body */}
+          <div className="p-5 space-y-5">
+            {games.map((g) => (
+              <button
+                key={g.order}
+                onClick={() => (g.onClick ?? handleClick)(g.order)}
+                className="w-full text-left group"
+              >
+                {/* meta */}
+                <div className="px-2 text-lg text-[#a7d3ff]/90 flex items-center gap-4 mb-1">
+                  <span>
+                    <span className="opacity-80">ประเภท:</span>{" "}
+                    <span className="font-semibold">{g.category}</span>
+                  </span>
+                  <span className="opacity-80">
+                    โหวต:{" "}
+                    <span className="font-semibold text-white">{g.votes}</span>
+                  </span>
+                </div>
+
+                {/* pill */}
+                <div className="relative bg-black text-white rounded-full h-14 flex items-center pl-16 pr-5 transition-transform duration-150 group-active:scale-[0.98]">
+                  {/* index bubble */}
+                  <div
+                    className={[
+                      "absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full grid place-items-center text-[#1b2a52] font-extrabold text-4xl",
+                      g.highlight ? "bg-[#ffa654]" : "bg-[#b9dcff]",
+                    ].join(" ")}
+                  >
+                    {g.order}
+                  </div>
+
+                  {/* title */}
+                  <div className="font-medium text-lg tracking-wide truncate">
+                    {g.title}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </PageTransition>
+    </div>
   );
 }
 
