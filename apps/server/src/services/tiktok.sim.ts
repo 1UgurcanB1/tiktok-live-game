@@ -107,9 +107,6 @@ export class SimulatedTikTokConnection {
     this.running = false;
     for (const t of this.timers) clearTimeout(t);
     this.timers = [];
-    // free mock arrays to avoid accumulation across multiple connect/disconnect cycles
-    this.chatMessages = [];
-    this.names = [];
     this.totalLikeCount = 0;
     this.emit("disconnected", undefined as unknown as never);
   }
