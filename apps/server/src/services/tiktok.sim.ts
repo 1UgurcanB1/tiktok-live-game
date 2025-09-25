@@ -281,8 +281,7 @@ async function findNearestPackageJsonDir(
 ): Promise<string> {
   let dir = startDir;
   const root = path.parse(dir).root;
-  let depth = 0;
-  while (true) {
+  for (let depth = 0; depth <= maxDepth; depth++) {
     try {
       const st = await fs.promises.stat(path.join(dir, "package.json"));
       if (st.isFile()) return dir;
@@ -290,10 +289,12 @@ async function findNearestPackageJsonDir(
       // not found here, continue upwards
     }
     const parent = path.dirname(dir);
-    if (parent === dir || dir === root || depth >= maxDepth) break;
+    if (parent === dir || dir === root) break;
     dir = parent;
-    depth++;
   }
-  // fallback to startDir if not found within maxDepth
+  console.warn(
+    "[tiktok.sim] package.json not found within maxDepth; falling back to startDir",
+    { startDir, maxDepth },
+  );
   return startDir;
 }
