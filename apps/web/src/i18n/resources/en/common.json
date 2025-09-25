@@ -1,0 +1,16 @@
+{
+  "language": {
+    "switch": "Switch Language",
+    "english": "English",
+    "thai": "Thai"
+  },
+  "nav": {
+    "start": "Start Game",
+    "controlCenter": "Control Center",
+    "selectGame": "Select Game"
+  },
+  "generic": {
+    "category": "Category",
+    "votes": "Votes"
+  }
+}

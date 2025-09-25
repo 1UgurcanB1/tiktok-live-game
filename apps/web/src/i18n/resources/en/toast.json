@@ -1,0 +1,5 @@
+{
+  "disconnected": "Connection lost",
+  "reconnected": "Reconnected",
+  "genericError": "An error occurred"
+}

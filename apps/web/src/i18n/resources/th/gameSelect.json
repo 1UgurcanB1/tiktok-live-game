@@ -1,0 +1,14 @@
+{
+  "header": {
+    "title": "เลือกเกม",
+    "subtitle": "(สำหรับผู้ติดตามเท่านั้น)"
+  },
+  "options": {
+    "randomGame": "สุ่มเกม",
+    "random": "สุ่ม"
+  },
+  "meta": {
+    "category": "ประเภท",
+    "votes": "โหวต"
+  }
+}

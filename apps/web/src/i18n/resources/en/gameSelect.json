@@ -1,0 +1,14 @@
+{
+  "header": {
+    "title": "Select Game",
+    "subtitle": "(Followers only)"
+  },
+  "options": {
+    "randomGame": "Random Game",
+    "random": "Random"
+  },
+  "meta": {
+    "category": "Category",
+    "votes": "Votes"
+  }
+}

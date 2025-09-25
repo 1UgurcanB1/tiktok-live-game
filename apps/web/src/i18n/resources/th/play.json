@@ -1,0 +1,7 @@
+{
+  "notSelected": "ยังไม่ได้เลือกเกม",
+  "questionPlaceholder": "คำถาม/โจทย์ของรอบนี้ (mock)",
+  "timeLeft": "เหลือเวลา {{seconds}}s",
+  "endRoundTest": "จบรอบ (ทดสอบ)",
+  "roundProgress": "รอบ {{current}}/{{total}}"
+}
