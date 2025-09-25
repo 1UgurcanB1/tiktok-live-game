@@ -1,9 +1,9 @@
 import type {
   ChatEventData,
-  FollowEventData,
   GiftEventData,
-  LikeEventData,
+  FollowEventData,
   ShareEventData,
+  LikeEventData,
 } from "@tiktok/types";
 import { randomId, sleep } from "@tiktok/utils";
 import fs from "node:fs";
@@ -26,47 +26,55 @@ export class SimulatedTikTokConnection {
   private username: string;
   private roomId: string;
   private timers: NodeJS.Timeout[] = [];
-  // ใช้โครงสร้างแบบหลวมเพื่อเลี่ยงปัญหา inferred never[]
   private listeners: Partial<
     Record<keyof EventMap, Array<(ev: unknown) => void>>
   > = {};
   private running = false;
-  private chatMessages: string[];
-  private names: string[];
+  private chatMessages: string[] = [];
+  private names: string[] = [];
   private totalLikeCount = 0;
 
   constructor(username: string) {
     this.username = username;
     this.roomId = Math.floor(Math.random() * 10_000_000).toString();
-    // Resolve paths relative to this module so it works regardless of cwd
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const serverRoot = path.resolve(__dirname, "..", "..");
-    const mockDir = path.join(serverRoot, "mock");
+  }
 
-    const fromServerRoot = (p?: string) =>
-      p ? (path.isAbsolute(p) ? p : path.resolve(serverRoot, p)) : undefined;
+  async connect() {
+    // Load mock files async on first connect
+    if (this.chatMessages.length === 0 || this.names.length === 0) {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const envRoot = process.env.TIKTOK_SERVER_ROOT?.trim();
+      const serverRoot =
+        envRoot && envRoot.length
+          ? path.isAbsolute(envRoot)
+            ? envRoot
+            : path.resolve(process.cwd(), envRoot)
+          : await findNearestPackageJsonDir(__dirname);
+      const mockDir = path.join(serverRoot, "mock");
+      const fromServerRoot = (p?: string) =>
+        p ? (path.isAbsolute(p) ? p : path.resolve(serverRoot, p)) : undefined;
 
-    const candidates = [
-      fromServerRoot(process.env.TIKTOK_SIM_CHAT_FILE),
-      path.join(mockDir, "tiktok_chat_messages.txt"),
-    ].filter(Boolean) as string[];
-    this.chatMessages = loadFirstExisting(candidates, [
-      "สวัสดีครับ",
-      "สู้ๆ นะ",
-      "แจกของหน่อย",
-      "เกมอะไรครับ",
-      "5555",
-      "Nice!",
-      "Let's go!",
-      "สุดยอด",
-    ]);
-    this.names = loadFirstExisting(
-      [
+      const chatCandidates = [
+        fromServerRoot(process.env.TIKTOK_SIM_CHAT_FILE),
+        path.join(mockDir, "tiktok_chat_messages.txt"),
+      ].filter(Boolean) as string[];
+      this.chatMessages = await loadFirstExistingAsync(chatCandidates, [
+        "สวัสดีครับ",
+        "สู้ๆ นะ",
+        "แจกของหน่อย",
+        "เกมอะไรครับ",
+        "5555",
+        "Nice!",
+        "Let's go!",
+        "สุดยอด",
+      ]);
+
+      const nameCandidates = [
         fromServerRoot(process.env.TIKTOK_SIM_NAMES_FILE),
         path.join(mockDir, "tiktok_names.txt"),
-      ].filter(Boolean) as string[],
-      [
+      ].filter(Boolean) as string[];
+      this.names = await loadFirstExistingAsync(nameCandidates, [
         "Alice",
         "Bob",
         "Carol",
@@ -83,13 +91,10 @@ export class SimulatedTikTokConnection {
         "Heidi",
         "Ivan",
         "Judy",
-      ],
-    );
-  }
+      ]);
+    }
 
-  async connect() {
     this.running = true;
-    // kick off event generators
     this.spawnChatLoop();
     this.spawnGiftLoop();
     this.spawnShareLoop();
@@ -134,7 +139,6 @@ export class SimulatedTikTokConnection {
         this.emit("chat", data);
       }
     };
-    // fire and forget
     run();
   }
 
@@ -233,12 +237,15 @@ export class SimulatedTikTokConnection {
     run();
   }
 }
-function loadFirstExisting(paths: string[], fallback: string[]): string[] {
+
+async function loadFirstExistingAsync(
+  paths: string[],
+  fallback: string[],
+): Promise<string[]> {
   for (const p of paths) {
     try {
       if (!p) continue;
-      if (!fs.existsSync(p)) continue;
-      const raw = fs.readFileSync(p, "utf8");
+      const raw = await fs.promises.readFile(p, "utf8");
       const lines = raw
         .split(/\r?\n/)
         .map((s) => s.trim())
