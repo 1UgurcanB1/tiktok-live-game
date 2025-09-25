@@ -288,17 +288,17 @@ tiktok-live-game/
 
 Game configs live in `packages/constants/src/game.ts` (typed by `GameConfig`). Each includes: stable `id`, `defaultRounds`, `defaultRoundDurationMs`, `category`, `description`, and `rules` (Thai).
 
-| ID | Name | Rounds | Round ms | Category |
-|----|------|--------|----------|----------|
-| guessWordTH | ทายคำภาษาไทย | 10 | 40000 | guessWord |
-| guessWordEN | ทายคำภาษาอังกฤษ | 10 | 40000 | guessWord |
-| guessFlag | ทายภาพธงชาติ | 10 | 35000 | guessPicture |
-| guessMottoTH | ทายคำขวัญจังหวัด | 8 | 45000 | guessWord |
-| wordleTH | เกมเวิร์ดเดิลภาษาไทย | 6 | 55000 | wordle |
-| wordleEN | เกมเวิร์ดเดิลภาษาอังกฤษ | 6 | 55000 | wordle |
-| contextoTH | เกมคอนเท็กโตภาษาไทย | 8 | 50000 | contexto |
-| davinciTH | เกมดาวินชีภาษาไทย | 10 | 45000 | davinci |
-| memoryTest | ทดสอบความจำ | 10 | 35000 | memory |
+| ID           | Name                    | Rounds | Round ms | Category     |
+| ------------ | ----------------------- | ------ | -------- | ------------ |
+| guessWordTH  | ทายคำภาษาไทย            | 10     | 40000    | guessWord    |
+| guessWordEN  | ทายคำภาษาอังกฤษ         | 10     | 40000    | guessWord    |
+| guessFlag    | ทายภาพธงชาติ            | 10     | 35000    | guessPicture |
+| guessMottoTH | ทายคำขวัญจังหวัด        | 8      | 45000    | guessWord    |
+| wordleTH     | เกมเวิร์ดเดิลภาษาไทย    | 6      | 55000    | wordle       |
+| wordleEN     | เกมเวิร์ดเดิลภาษาอังกฤษ | 6      | 55000    | wordle       |
+| contextoTH   | เกมคอนเท็กโตภาษาไทย     | 8      | 50000    | contexto     |
+| davinciTH    | เกมดาวินชีภาษาไทย       | 10     | 45000    | davinci      |
+| memoryTest   | ทดสอบความจำ             | 10     | 35000    | memory       |
 
 ### Voting Flow
 
@@ -306,7 +306,6 @@ Game configs live in `packages/constants/src/game.ts` (typed by `GameConfig`). E
 2. Users vote by sending a single digit 0–5. Regex used: `VOTE_DIGIT_REGEX` (ignores digits embedded inside longer numbers).
 3. Only a unique leader becomes highlighted; ties do not shift highlight (stability).
 4. Timer end:
-
    - Tie → random among tied.
    - Winner 0 → random among 5 sampled.
 
