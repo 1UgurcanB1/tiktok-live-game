@@ -89,8 +89,9 @@ export const GAMES: GameConfig[] = [
     defaultRoundDurationMs: 40_000,
     gameImage: "https://cdn-icons-png.flaticon.com/512/5087/5087579.png",
     rules: [
-      "เกมนี้จะมีคำศัพท์ภาษาไทยให้ทายทั้งหมด 10 คำ",
-      "ผู้เล่นจะต้องทายคำศัพท์ให้ถูกต้องภายในเวลาที่กำหนด",
+      "Guess the hidden English word in 6 tries.",
+      "Each guess must be a valid 5-letter English word.",
+      "After each guess, the color of the tiles will change to show how close your guess was to the word.",
     ],
   },
   {
