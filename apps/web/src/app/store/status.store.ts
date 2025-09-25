@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { DBStatusEvent, TikTokStatusEvent } from "@tiktok/types";
 import { pushToast } from "../../components/Toast";
+import i18n from "../../i18n";
 
 interface StatusState {
   dbOk: boolean;
@@ -45,7 +46,7 @@ if (typeof window !== "undefined") {
         window.history.replaceState(null, "", "/");
         window.dispatchEvent(new PopStateEvent("popstate"));
         // show toast only if we actually navigated from another path
-        pushToast("ระบบขาดการเชื่อมต่อ", "error");
+        pushToast(i18n.t("toast:disconnected"), "error");
       }
     }
     prevAllOk = allOk;

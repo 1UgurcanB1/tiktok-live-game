@@ -2,9 +2,11 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DEFAULT_TIMERS } from "@tiktok/constants";
 import PageTransition from "../components/PageTransition";
+import { useTranslation } from "react-i18next";
 
 export default function Scoreboard() {
   const nav = useNavigate();
+  const { t } = useTranslation(["scoreboard"]);
 
   useEffect(() => {
     const id = setTimeout(() => nav("/support"), DEFAULT_TIMERS.scoreboardMs);
@@ -20,7 +22,7 @@ export default function Scoreboard() {
   return (
     <PageTransition>
       <main className="p-6 max-w-xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4">กระดานคะแนนรวมวันนี้</h2>
+        <h2 className="text-2xl font-bold mb-4">{t("title")}</h2>
         <ol className="space-y-2">
           {mock.map((m, i) => (
             <li
@@ -34,7 +36,7 @@ export default function Scoreboard() {
             </li>
           ))}
         </ol>
-        <p className="opacity-60 mt-4">จะไปหน้าซัพพอร์ตอัตโนมัติ…</p>
+        <p className="opacity-60 mt-4">{t("autoNext")}</p>
       </main>
     </PageTransition>
   );

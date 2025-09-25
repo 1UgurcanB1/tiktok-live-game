@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./app/router";
 import PageTransition from "./components/PageTransition";
@@ -92,7 +92,7 @@ export default function App() {
       offDb();
       offTk();
     };
-  }, []);
+  }, [setDB, setTikTok]);
 
   return (
     <div className="min-h-dvh bg-neutral-900  text-white font-kanit">

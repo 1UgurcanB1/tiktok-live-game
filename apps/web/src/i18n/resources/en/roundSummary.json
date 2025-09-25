@@ -1,0 +1,6 @@
+{
+  "title": "Round Summary {{round}}",
+  "item.sampleRank": "Ranking / Scores (sample)",
+  "item.sampleStats": "Correct / Wrong stats",
+  "autoNext": "Moving to next screen…"
+}

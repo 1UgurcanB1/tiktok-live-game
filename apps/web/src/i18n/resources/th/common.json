@@ -1,0 +1,16 @@
+{
+  "language": {
+    "switch": "สลับภาษา",
+    "english": "ภาษาอังกฤษ",
+    "thai": "ภาษาไทย"
+  },
+  "nav": {
+    "start": "เริ่มเกม",
+    "controlCenter": "ศูนย์ควบคุม",
+    "selectGame": "เลือกเกม"
+  },
+  "generic": {
+    "category": "ประเภท",
+    "votes": "โหวต"
+  }
+}

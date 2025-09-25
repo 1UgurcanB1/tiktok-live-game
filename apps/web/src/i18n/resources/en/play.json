@@ -1,0 +1,7 @@
+{
+  "notSelected": "No game selected",
+  "questionPlaceholder": "Round prompt (mock)",
+  "timeLeft": "{{seconds}}s left",
+  "endRoundTest": "End round (test)",
+  "roundProgress": "Round {{current}}/{{total}}"
+}

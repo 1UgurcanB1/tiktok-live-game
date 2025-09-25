@@ -28,6 +28,17 @@ export const GAMES: GameConfig[] = [
       "ตอบถูกเป็นคนแรก = ได้เต็มคะแนน รอบนั้นจบ",
       "ถ้าไม่มีใครตอบถูกภายในเวลา จะเฉลยแล้วข้ามไปคำถัดไป",
     ],
+    nameEn: "Thai Word Guess",
+    categoryDescriptionEn: "Word Guessing",
+    descriptionEn:
+      "Host has a Thai word or hint. Viewers type the exact answer in chat. First correct wins the points immediately.",
+    rulesEn: [
+      "Each round has 1 Thai word or hint",
+      "Type the exact answer in chat (no special symbols needed)",
+      "Only the first correct answer from each player counts",
+      "First overall correct gets full points and the round ends",
+      "If time runs out, reveal the answer and move on",
+    ],
   },
   {
     id: "guessWordEN",
@@ -43,6 +54,16 @@ export const GAMES: GameConfig[] = [
       "ต้องสะกดถูกต้อง (ไม่เคร่งตัวพิมพ์เล็ก/ใหญ่)",
       "คำตอบแรกที่ถูกของแต่ละคนเท่านั้นที่นับ",
       "คนที่ตอบถูกก่อนสุดในรอบ รับคะแนนเต็ม",
+    ],
+    nameEn: "English Word Guess",
+    categoryDescriptionEn: "Word Guessing",
+    descriptionEn:
+      "Same as Thai word guess but with English vocabulary. Practice spelling and word recall.",
+    rulesEn: [
+      "Hint or category (if any) is given before the round",
+      "Spelling must be correct (case-insensitive)",
+      "Only the first correct answer per player counts",
+      "First to answer correctly gets full points",
     ],
   },
   {
@@ -61,6 +82,16 @@ export const GAMES: GameConfig[] = [
       "ตอบถูกเป็นคนแรก ได้คะแนนเต็มและจบรอบทันที",
       "หากหมดเวลาไม่มีคนถูก จะเฉลยแล้วไปภาพถัดไป",
     ],
+    nameEn: "Guess the Flag",
+    categoryDescriptionEn: "Picture Guessing",
+    descriptionEn:
+      "A flag is shown each round. Viewers type the country name (Thai or English). Fastest correct earns the points.",
+    rulesEn: [
+      "See the flag and type the country name (Thai or English)",
+      "Minor spelling deviations may not count (depends on validator)",
+      "First correct gets full points and ends the round",
+      "If no one is correct by timeout, reveal and continue",
+    ],
   },
   {
     id: "guessMottoTH",
@@ -77,6 +108,16 @@ export const GAMES: GameConfig[] = [
       "พิมพ์ชื่อจังหวัดในแชท (ย่อ/ผิดสะกดอาจไม่ผ่าน)",
       "ตอบถูกคนแรก รับคะแนนเต็ม",
       "ถ้า 50% เวลาผ่านไป อาจให้เพิ่ม 1 คำใบ้",
+    ],
+    nameEn: "Province Motto Guess",
+    categoryDescriptionEn: "Word Guessing",
+    descriptionEn:
+      "A province motto (or part of it) is shown. Guess the correct Thai province name.",
+    rulesEn: [
+      "One province motto or key phrase per round",
+      "Type the province name in chat (abbreviations/spelling errors may not pass)",
+      "First correct answer gets full points",
+      "At 50% time remaining, an extra hint may appear",
     ],
   },
   {
@@ -96,6 +137,17 @@ export const GAMES: GameConfig[] = [
       "สีเทา = ไม่มีตัวอักษรนั้นในคำ",
       "ทายถูกก่อนหมดรอบ รับคะแนนเต็ม ถ้าไม่สำเร็จไม่มีคะแนน",
     ],
+    nameEn: "Thai Wordle",
+    categoryDescriptionEn: "Word Guessing",
+    descriptionEn:
+      "Guess the Thai word within limited attempts. Colors indicate correct letters and positions.",
+    rulesEn: [
+      "Guess one full word per attempt in chat",
+      "Green = letter correct & correct position",
+      "Yellow = letter exists but different position",
+      "Gray = letter not in target word",
+      "Solve before attempts or time run out for full points",
+    ],
   },
   {
     id: "wordleEN",
@@ -113,6 +165,16 @@ export const GAMES: GameConfig[] = [
       "ใช้ข้อมูลรอบก่อนวางแผนเดาครั้งต่อไป",
       "ชนะเมื่อเดาคำถูกภายในจำนวนครั้งจำกัด",
     ],
+    nameEn: "English Wordle",
+    categoryDescriptionEn: "Word Guessing",
+    descriptionEn:
+      "Standard Wordle gameplay with English words. Use color feedback to narrow possibilities.",
+    rulesEn: [
+      "Type words of the required length (e.g., 5 letters)",
+      "Each attempt highlights letters (Green / Yellow / Gray)",
+      "Use feedback to plan next guess",
+      "Win by solving within limited attempts",
+    ],
   },
   {
     id: "contextoTH",
@@ -129,6 +191,16 @@ export const GAMES: GameConfig[] = [
       "ระบบตอบเป็นอันดับ (Rank) หรือคะแนนความใกล้ ยิ่งต่ำยิ่งดี",
       "ใช้ผลย้อนหลังกำหนดกลยุทธ์คำต่อไป",
       "ใครเดาคำเป้าถูกก่อน จบรอบ & ได้คะแนน",
+    ],
+    nameEn: "Thai Contexto",
+    categoryDescriptionEn: "Semantic Guessing",
+    descriptionEn:
+      "Guess the secret Thai word. Each guess returns a semantic closeness rank (lower is closer).",
+    rulesEn: [
+      "Type any Thai word to gauge semantic closeness",
+      "System returns a rank or closeness score (lower = closer)",
+      "Use previous feedback to refine strategy",
+      "First to guess the target word wins the round",
     ],
   },
   {
@@ -148,6 +220,17 @@ export const GAMES: GameConfig[] = [
       "คะแนนปรับตามสัดส่วนตัวอักษรที่เปิดแล้ว (เปิดน้อย = คะแนนมาก)",
       "ทายผิดไม่โดนลบคะแนน แต่จะมีคูลดาวน์สั้นๆ (ถ้ากำหนด)",
     ],
+    nameEn: "Thai Da Vinci Code",
+    categoryDescriptionEn: "Word Guessing",
+    descriptionEn:
+      "Letters of a Thai word are gradually revealed. Earlier correct guesses score higher.",
+    rulesEn: [
+      "Round starts with all letters hidden ( _ )",
+      "Letters reveal gradually (time or events)",
+      "Type the full word to guess; if correct you win instantly",
+      "Score scales with percentage of letters revealed (fewer = more points)",
+      "Wrong guesses don't lose points but may impose a short cooldown",
+    ],
   },
   {
     id: "memoryTest",
@@ -164,6 +247,16 @@ export const GAMES: GameConfig[] = [
       "ผู้เล่นพิมพ์ลำดับกลับเหมือนเดิม (รูปแบบที่กำหนด)",
       "ตอบถูกครบทุกตัว = ได้คะแนนเต็ม / ขาดตก = 0 หรือบางส่วน (ขึ้นกับ logic ภายหลัง)",
       "ความยาวจะเพิ่มขึ้นเมื่อผ่านรอบ เพื่อท้าทายมากขึ้น",
+    ],
+    nameEn: "Memory Challenge",
+    categoryDescriptionEn: "Memory",
+    descriptionEn:
+      "Memorize a short sequence (emoji / numbers / letters) then type it back. Later rounds get longer.",
+    rulesEn: [
+      "Sequence displayed briefly each round then hidden",
+      "Players retype the exact order (format rules TBD)",
+      "Perfect recall = full points; partial may yield reduced or zero points (logic TBD)",
+      "Sequence length increases over rounds",
     ],
   },
 ];
