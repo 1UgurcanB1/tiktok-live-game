@@ -8,6 +8,7 @@ import type { GameConfig } from "@tiktok/types";
 import { events } from "../services/ws";
 import { useGameStore } from "../app/store/game.store";
 import SystemStatus from "../components/SystemStatus";
+import { useTranslation } from "react-i18next";
 
 type GameItem = {
   order: number; // 0..5 แสดงตัวเลขนี้แทน id
@@ -21,6 +22,7 @@ type GameItem = {
 export default function GameSelect() {
   const navigate = useNavigate();
   const setGame = useGameStore((s) => s.setGame);
+  const { t } = useTranslation(["gameSelect", "common"]);
 
   // Keep lightweight recent history in localStorage to reduce repeats across sessions
   const [recent, setRecent] = useState<string[]>(() => {
@@ -39,22 +41,21 @@ export default function GameSelect() {
     [recent],
   );
 
-  // Votes for options 0..5 (index 0 is "สุ่มเกม")
+  // Votes for options 0..5 (index 0 is random option)
   const [votes, setVotes] = useState<number[]>([0, 0, 0, 0, 0, 0]);
   // Current highlighted leader (persist across ties); default to 0
   const [leaderOrder, setLeaderOrder] = useState<number>(0);
 
   // Build items for rendering with dynamic highlight based on current votes
-  const maxVotes = Math.max(...votes);
   const games: GameItem[] = useMemo(() => {
     const arr: GameItem[] = [];
     // id 0: random option
     arr.push({
       order: 0,
-      title: "สุ่มเกม",
-      category: "สุ่ม",
+      title: t("options.randomGame"),
+      category: t("options.random"),
       votes: votes[0],
-      // มีได้แค่ตัวเดียว: ใช้ leaderOrder จาก state (ไม่เปลี่ยนเมื่อเสมอ)
+      // only one highlight at a time using leaderOrder from state
       highlight: leaderOrder === 0,
     });
     // ids 1..5 from selected games
@@ -70,7 +71,8 @@ export default function GameSelect() {
       });
     }
     return arr;
-  }, [leaderOrder, selected, votes, maxVotes]);
+    // maxVotes derived from votes; not needed in dependency list separately
+  }, [leaderOrder, selected, votes, t]);
 
   // Update leaderOrder only when there is a unique leader; ignore ties
   useEffect(() => {
@@ -176,10 +178,10 @@ export default function GameSelect() {
         <div className="flex flex-col">
           {/* Header strip */}
           <h2 className="text-3xl text-white text-center font-extrabold">
-            เลือกเกม
+            {t("header.title")}
           </h2>
           <h4 className="text-xl text-arctic-sky text-center">
-            (สำหรับผู้ติดตามเท่านั้น)
+            {t("header.subtitle")}
           </h4>
           <hr className="mt-6" />
 
@@ -194,11 +196,11 @@ export default function GameSelect() {
                 {/* meta */}
                 <div className="px-2 text-lg text-[#a7d3ff]/90 flex items-center gap-4 mb-1">
                   <span>
-                    <span className="opacity-80">ประเภท:</span>{" "}
+                    <span className="opacity-80">{t("meta.category")}:</span>{" "}
                     <span className="font-semibold">{g.category}</span>
                   </span>
                   <span className="opacity-80">
-                    โหวต:{" "}
+                    {t("meta.votes")}:{" "}
                     <span className="font-semibold text-white">{g.votes}</span>
                   </span>
                 </div>
