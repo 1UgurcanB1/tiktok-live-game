@@ -270,3 +270,20 @@ function pick<T>(arr: readonly T[]): T {
 function randSuffix() {
   return Math.random() < 0.2 ? randInt(1, 99).toString() : "";
 }
+
+async function findNearestPackageJsonDir(startDir: string): Promise<string> {
+  let dir = startDir;
+  const root = path.parse(dir).root;
+  while (true) {
+    try {
+      await fs.promises.access(path.join(dir, "package.json"));
+      return dir;
+    } catch {
+      const parent = path.dirname(dir);
+      if (parent === dir || dir === root) break;
+      dir = parent;
+    }
+  }
+  // fallback to startDir if not found
+  return startDir;
+}
