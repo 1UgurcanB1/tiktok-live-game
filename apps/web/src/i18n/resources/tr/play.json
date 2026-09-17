@@ -1,0 +1,7 @@
+{
+  "notSelected": "Oyun seçilmedi",
+  "questionPlaceholder": "Tur sorusu burada gösterilecek",
+  "timeLeft": "{{seconds}} saniye kaldı",
+  "endRoundTest": "Turu bitir (test)",
+  "roundProgress": "Tur {{current}}/{{total}}"
+}

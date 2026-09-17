@@ -8,9 +8,6 @@ import type {
   TikTokStatusEvent,
 } from "@tiktok/types";
 
-/** --------------------------
- *  Base helpers
- *  -------------------------- */
 const BASE = env.VITE_API_BASE ?? "/";
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -26,15 +23,23 @@ export class ApiError extends Error {
 }
 
 function u(path: string) {
-  // รองรับ base เป็น / หรือเป็น URL เต็ม
-  return new URL(path, BASE).toString();
+  if (/^https?:\/\//i.test(BASE)) {
+    return new URL(path, BASE).toString();
+  }
+
+  if (typeof window !== "undefined") {
+    const baseUrl = new URL(BASE || "/", window.location.origin);
+    return new URL(path, baseUrl).toString();
+  }
+
+  return path;
 }
 
 type ReqOpts = {
   signal?: AbortSignal;
   timeoutMs?: number;
   headers?: Record<string, string>;
-  credentials?: RequestCredentials; // "include" ถ้ามีคุกกี้
+  credentials?: RequestCredentials;
 };
 
 async function request<T>(
@@ -80,7 +85,6 @@ async function request<T>(
 
 function mergeSignals(a: AbortSignal, b?: AbortSignal) {
   if (!b) return a;
-  // simple fan-in
   const ctrl = new AbortController();
   const onAbort = () => ctrl.abort();
   if (a.aborted || b.aborted) ctrl.abort();
@@ -88,10 +92,6 @@ function mergeSignals(a: AbortSignal, b?: AbortSignal) {
   b.addEventListener("abort", onAbort);
   return ctrl.signal;
 }
-
-/** --------------------------
- *  API response types
- *  -------------------------- */
 
 export type ReadyResponse = { ready: boolean; db: boolean; tiktok: boolean };
 
@@ -106,10 +106,6 @@ export type CreateSessionBody = {
 };
 
 export type SessionAction = "start" | "pause" | "resume" | "next" | "end";
-
-/** --------------------------
- *  API methods
- *  -------------------------- */
 
 export function getDBStatus(opts?: ReqOpts) {
   return request<DBStatusEvent>("GET", "/api/health", undefined, opts);
@@ -145,12 +141,10 @@ export function tiktokDisconnect(opts?: ReqOpts) {
   );
 }
 
-/* Games catalog */
 export function getGames(opts?: ReqOpts) {
   return request<GameConfig[]>("GET", "/api/games", undefined, opts);
 }
 
-/* Sessions */
 export function createSession(body: CreateSessionBody, opts?: ReqOpts) {
   return request<Session>("POST", "/api/sessions", body, opts);
 }
@@ -172,7 +166,6 @@ export function sessionAction(
   );
 }
 
-/* Leaderboard */
 export function getLeaderboardToday(opts?: ReqOpts) {
   return request<LeaderboardDaily>(
     "GET",

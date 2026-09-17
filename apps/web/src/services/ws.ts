@@ -1,6 +1,5 @@
 // apps/web/src/services/ws.ts
 
-// ---------- Event Bus (typed, no any/Function) ----------
 type Handler<T> = (payload: T) => void;
 
 class EventBus {
@@ -11,7 +10,7 @@ class EventBus {
     set.add(h as unknown as Handler<unknown>);
     this.map.set(type, set);
     return () => {
-      set.delete(h as unknown as Handler<unknown>); // cleanup returns void
+      set.delete(h as unknown as Handler<unknown>);
     };
   }
 
@@ -23,7 +22,6 @@ class EventBus {
 
 export const events = new EventBus();
 
-// ---------- รูปแบบอีเวนต์จากเซิร์ฟเวอร์ ----------
 export type ServerEvent =
   | {
       type: "health";
@@ -34,7 +32,6 @@ export type ServerEvent =
   | { type: "score_update"; scores: Array<{ userId: string; total: number }> }
   | { type: string; [k: string]: unknown };
 
-// ---------- WS client (typed) ----------
 class WSClient {
   private ws: WebSocket | null = null;
   private url = "";
@@ -42,7 +39,7 @@ class WSClient {
   private timer: number | null = null;
 
   connect(url: string): void {
-    this.url = url;
+    this.url = resolveWebSocketUrl(url);
     this.open();
   }
 
@@ -63,23 +60,20 @@ class WSClient {
         const msg = JSON.parse(text) as unknown;
         if (isServerEvent(msg)) {
           events.emit(msg.type, msg as never);
-          // Emit wildcard for all TikTok events
           const t = (msg as { type: string }).type;
           if (typeof t === "string" && t.startsWith("tiktok.")) {
             events.emit("tiktok.*", msg as never);
           }
         }
       } catch {
-        // ignore malformed payload
+        // Ignore malformed payloads.
       }
     });
 
     this.ws.addEventListener("close", () => {
       events.emit("ws_close", {} as unknown);
       const wait = Math.min(30_000, 1000 * 2 ** this.retry++);
-      if (this.timer) {
-        clearTimeout(this.timer); // ✅ แทน short-circuit expression
-      }
+      if (this.timer) clearTimeout(this.timer);
       this.timer = window.setTimeout(() => this.open(), wait);
     });
 
@@ -95,11 +89,18 @@ class WSClient {
   }
 
   close(): void {
-    if (this.timer) {
-      clearTimeout(this.timer);
-    }
+    if (this.timer) clearTimeout(this.timer);
     this.ws?.close();
   }
+}
+
+function resolveWebSocketUrl(value: string): string {
+  if (/^wss?:\/\//i.test(value)) return value;
+  if (typeof window === "undefined") return value;
+
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const path = value.startsWith("/") ? value : `/${value}`;
+  return `${protocol}//${window.location.host}${path}`;
 }
 
 function isServerEvent(v: unknown): v is ServerEvent {

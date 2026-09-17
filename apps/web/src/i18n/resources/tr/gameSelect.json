@@ -1,0 +1,14 @@
+{
+  "header": {
+    "title": "Sıradaki Oyunu Seç",
+    "subtitle": "Chat oylarıyla belirlenir"
+  },
+  "options": {
+    "randomGame": "Rastgele Oyun",
+    "random": "Rastgele"
+  },
+  "meta": {
+    "category": "Kategori",
+    "votes": "Oy"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "disconnected": "Bağlantı kesildi",
+  "reconnected": "Bağlantı yeniden kuruldu",
+  "genericError": "Bir hata oluştu"
+}
