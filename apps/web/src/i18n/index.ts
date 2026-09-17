@@ -9,40 +9,44 @@ import enRoundSummary from "./resources/en/roundSummary.json";
 import enRules from "./resources/en/rules.json";
 import enPlay from "./resources/en/play.json";
 import enToast from "./resources/en/toast.json";
-import thCommon from "./resources/th/common.json";
-import thHome from "./resources/th/home.json";
-import thGameSelect from "./resources/th/gameSelect.json";
-import thScoreboard from "./resources/th/scoreboard.json";
-import thSupport from "./resources/th/support.json";
-import thRoundSummary from "./resources/th/roundSummary.json";
-import thRules from "./resources/th/rules.json";
-import thPlay from "./resources/th/play.json";
-import thToast from "./resources/th/toast.json";
+import trCommon from "./resources/tr/common.json";
+import trHome from "./resources/tr/home.json";
+import trGameSelect from "./resources/tr/gameSelect.json";
+import trScoreboard from "./resources/tr/scoreboard.json";
+import trSupport from "./resources/tr/support.json";
+import trRoundSummary from "./resources/tr/roundSummary.json";
+import trRules from "./resources/tr/rules.json";
+import trPlay from "./resources/tr/play.json";
+import trToast from "./resources/tr/toast.json";
 
-// Determine initial language preference
 let stored: string | null = null;
 try {
   stored = typeof window !== "undefined" ? localStorage.getItem("lang") : null;
 } catch {
   stored = null;
 }
-const browser =
-  typeof navigator !== "undefined" ? navigator.language.slice(0, 2) : "th";
-// Default should now be Thai. Use stored preference if valid; otherwise always start in 'th'.
-const initialLng = (() => {
-  if (stored && ["en", "th"].includes(stored)) return stored;
-  // If browser is Thai we use it, otherwise also Thai (forced default)
-  return browser.startsWith("th") ? "th" : "th";
-})();
 
-export const AVAILABLE_LANGS = ["en", "th"] as const;
+const initialLng = stored && ["en", "tr"].includes(stored) ? stored : "tr";
+
+export const AVAILABLE_LANGS = ["tr", "en"] as const;
 
 i18n.use(initReactI18next).init({
   lng: initialLng,
-  fallbackLng: "en",
+  fallbackLng: "tr",
   supportedLngs: AVAILABLE_LANGS as unknown as string[],
   interpolation: { escapeValue: false },
   resources: {
+    tr: {
+      common: trCommon,
+      home: trHome,
+      gameSelect: trGameSelect,
+      scoreboard: trScoreboard,
+      support: trSupport,
+      roundSummary: trRoundSummary,
+      rules: trRules,
+      play: trPlay,
+      toast: trToast,
+    },
     en: {
       common: enCommon,
       home: enHome,
@@ -54,30 +58,16 @@ i18n.use(initReactI18next).init({
       play: enPlay,
       toast: enToast,
     },
-    th: {
-      common: thCommon,
-      home: thHome,
-      gameSelect: thGameSelect,
-      scoreboard: thScoreboard,
-      support: thSupport,
-      roundSummary: thRoundSummary,
-      rules: thRules,
-      play: thPlay,
-      toast: thToast,
-    },
   },
 });
 
-// Helper to change language and persist
 export function setLanguage(lng: string) {
-  if (!AVAILABLE_LANGS.includes(lng as (typeof AVAILABLE_LANGS)[number])) {
-    return;
-  }
+  if (!AVAILABLE_LANGS.includes(lng as (typeof AVAILABLE_LANGS)[number])) return;
   i18n.changeLanguage(lng);
   try {
     localStorage.setItem("lang", lng);
   } catch {
-    // ignore persistence errors (e.g., private mode)
+    // ignore persistence errors
   }
 }
 
