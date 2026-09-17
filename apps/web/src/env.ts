@@ -1,7 +1,6 @@
 // apps/web/src/env.ts
 import { z } from "zod";
 
-// ดึงค่า “ที่อนุญาตให้ถึง client” ออกมา
 const raw = {
   MODE: import.meta.env.MODE,
   VITE_API_BASE: import.meta.env.VITE_API_BASE,
@@ -11,10 +10,11 @@ const raw = {
 } as const;
 
 const EnvSchema = z.object({
-  MODE: z.string(), // "development" | "production" | "staging"
+  MODE: z.string(),
   VITE_API_BASE: z.string().default("/"),
   VITE_TIKTOK_USERNAME: z.string().min(1).optional(),
-  VITE_WS_URL: z.string().url().optional(), // ถ้าให้ users กำหนด WS เอง
+  // Supports both absolute ws(s):// URLs and same-origin paths such as /ws.
+  VITE_WS_URL: z.string().min(1).optional(),
   VITE_TIKTOK_MODE: z.enum(["real", "sim"]).optional(),
 });
 
