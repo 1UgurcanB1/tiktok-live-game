@@ -1,0 +1,16 @@
+{
+  "language": {
+    "switch": "Dili Değiştir",
+    "english": "İngilizce",
+    "turkish": "Türkçe"
+  },
+  "nav": {
+    "start": "Oyunu Başlat",
+    "controlCenter": "Kontrol Merkezi",
+    "selectGame": "Oyun Seç"
+  },
+  "generic": {
+    "category": "Kategori",
+    "votes": "Oy"
+  }
+}
