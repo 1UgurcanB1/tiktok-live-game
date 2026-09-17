@@ -1,31 +1,53 @@
 import mongoose from "mongoose";
 import { env } from "./env.js";
 
+let memoryMode = false;
+
 export async function connectMongo() {
-  if (!env.DATABASE_URL) throw new Error("DATABASE_URL not set");
-  await mongoose.connect(env.DATABASE_URL, {
+  if (env.DATABASE_MODE === "memory") {
+    memoryMode = true;
+    console.warn("[db] DATABASE_MODE=memory, MongoDB connection skipped");
+    return null;
+  }
+
+  memoryMode = false;
+  await mongoose.connect(env.DATABASE_URL!, {
     autoIndex: env.NODE_ENV === "development",
+    serverSelectionTimeoutMS: 10_000,
   });
+  console.warn("[db] connected to MongoDB Atlas / MongoDB");
   return mongoose.connection;
 }
 
 export async function healthMongo() {
-  const conn = mongoose.connection;
+  if (memoryMode || env.DATABASE_MODE === "memory") {
+    return { ok: true, state: 1, mode: "memory" as const };
+  }
 
-  // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+  const conn = mongoose.connection;
   if (conn.readyState !== 1) {
     try {
       await conn.asPromise();
     } catch (e) {
-      return { ok: false, state: conn.readyState, error: String(e) };
+      return {
+        ok: false,
+        state: conn.readyState,
+        mode: "mongo" as const,
+        error: String(e),
+      };
     }
   }
 
   try {
     const db = conn.db ?? conn.getClient().db();
     await db.admin().ping();
-    return { ok: true, state: conn.readyState };
+    return { ok: true, state: conn.readyState, mode: "mongo" as const };
   } catch (e) {
-    return { ok: false, state: conn.readyState, error: String(e) };
+    return {
+      ok: false,
+      state: conn.readyState,
+      mode: "mongo" as const,
+      error: String(e),
+    };
   }
 }
